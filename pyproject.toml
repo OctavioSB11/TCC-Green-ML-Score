@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "green-ml-score"
+version = "0.1.0"
+description = "Métrica ambiental para modelos de Machine Learning."
+readme = "README.md"
+authors = [
+  { name = "Octavio Bordotti e Danilo Parolin" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "mlflow>=2.0.0",
+    "codecarbon>=2.3.1",
+    "requests>=2.28.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black",
+    "ruff"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["green_ml_score", "green_ml_score.*"]

@@ -1,0 +1,249 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="GreenML Detailed Pipeline" id="detailed-pipeline">
+    <mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Title -->
+        <mxCell id="title" value="GreenML Framework - Pipeline Detalhado" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="600" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Layer 1: Data Management -->
+        <mxCell id="layer1-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;opacity=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="1440" height="180" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="layer1-title" value="LAYER 1: DATA MANAGEMENT" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="90" width="300" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Datasets -->
+        <mxCell id="vision-data" value="&lt;b&gt;Vision&lt;/b&gt;&lt;br&gt;CIFAR-10&lt;br&gt;60k images&lt;br&gt;10 classes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="140" y="130" width="120" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="nlp-data" value="&lt;b&gt;NLP&lt;/b&gt;&lt;br&gt;TweetSentBR&lt;br&gt;15k tweets&lt;br&gt;3 classes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="680" y="130" width="120" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="tabular-data" value="&lt;b&gt;Tabular&lt;/b&gt;&lt;br&gt;Fraud Detection&lt;br&gt;284k transactions&lt;br&gt;Binary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="130" width="120" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Preprocessing -->
+        <mxCell id="preproc-vision" value="Normalization&lt;br&gt;Augmentation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="300" y="145" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="preproc-nlp" value="Tokenization&lt;br&gt;Padding" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="145" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="preproc-tabular" value="Feature Eng&lt;br&gt;Scaling" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="145" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows -->
+        <mxCell id="arrow-v-prep" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="vision-data" target="preproc-vision">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="arrow-n-prep" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="nlp-data" target="preproc-nlp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="arrow-t-prep" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="tabular-data" target="preproc-tabular">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- DVC -->
+        <mxCell id="dvc" value="&lt;b&gt;DVC Storage&lt;/b&gt;&lt;br&gt;• Version control&lt;br&gt;• Split tracking&lt;br&gt;• Hash validation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;" vertex="1" parent="1">
+          <mxGeometry x="480" y="140" width="160" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows to DVC -->
+        <mxCell id="arrow-prep-dvc1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="preproc-vision">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="230" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-prep-dvc2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="preproc-nlp">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="230" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-prep-dvc3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="preproc-tabular">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="230" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Layer 2: Experiment Orchestration -->
+        <mxCell id="layer2-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="280" width="1440" height="200" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="layer2-title" value="LAYER 2: EXPERIMENT ORCHESTRATION (MLflow)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="290" width="500" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Training loop -->
+        <mxCell id="training-loop" value="&lt;b&gt;FOR EACH MODEL:&lt;/b&gt;&lt;br&gt;&lt;br&gt;1. mlflow.start_run()&lt;br&gt;2. Initialize model&lt;br&gt;3. START CodeCarbon&lt;br&gt;4. Training epochs&lt;br&gt;5. STOP CodeCarbon&lt;br&gt;6. Evaluation&lt;br&gt;7. Calculate GMS&lt;br&gt;8. mlflow.log_metric()&lt;br&gt;9. mlflow.end_run()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="140" y="330" width="280" height="130" as="geometry"/>
+        </mxCell>
+        
+        <!-- MLflow icon -->
+        <mxCell id="mlflow-icon" value="&lt;b&gt;MLflow&lt;br&gt;Tracking&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="330" width="100" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Logged items -->
+        <mxCell id="logged-params" value="Parameters" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="900" y="310" width="120" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="logged-metrics" value="Metrics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="900" y="350" width="120" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="logged-artifacts" value="Artifacts" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="900" y="390" width="120" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows -->
+        <mxCell id="arrow-train-mlflow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=3;strokeColor=#0000FF;" edge="1" parent="1" source="training-loop" target="mlflow-icon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="arrow-mlflow-logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="mlflow-icon" target="logged-params">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Layer 3: Monitoring -->
+        <mxCell id="layer3-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;opacity=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="500" width="1440" height="150" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="layer3-title" value="LAYER 3: METRICS COLLECTION &amp; MONITORING" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="510" width="500" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Metrics boxes -->
+        <mxCell id="perf-metrics" value="&lt;b&gt;Performance&lt;/b&gt;&lt;br&gt;• Accuracy&lt;br&gt;• Precision&lt;br&gt;• Recall&lt;br&gt;• F1-score" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;" vertex="1" parent="1">
+          <mxGeometry x="140" y="550" width="140" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="energy-metrics" value="&lt;b&gt;Ambiental (via CodeCarbon)&lt;/b&gt;&lt;br&gt;• Energia (kWh)&lt;br&gt;• CO₂ (kg)&lt;br&gt;• Água/L (WUE)&lt;br&gt;• Duração" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;" vertex="1" parent="1">
+          <mxGeometry x="580" y="550" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- CodeCarbon -->
+        <mxCell id="codecarbon" value="&lt;b&gt;CodeCarbon&lt;/b&gt;&lt;br&gt;Energy Tracker" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="360" y="560" width="120" height="60" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="arrow-cc-energy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;dashed=1;" edge="1" parent="1" source="codecarbon" target="energy-metrics">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- MLflow Backend -->
+        <mxCell id="mlflow-backend" value="&lt;b&gt;MLflow Backend&lt;/b&gt;&lt;br&gt;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="540" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows to backend -->
+        <mxCell id="arrow-perf-backend" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="perf-metrics">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1300" y="590" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-energy-backend" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="energy-metrics">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1300" y="590" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Layer 4: GMS Computation -->
+        <mxCell id="layer4-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;opacity=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="670" width="1440" height="180" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="layer4-title" value="LAYER 4: GMS COMPUTATION ENGINE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="680" width="400" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- GMS Formula -->
+        <mxCell id="gms-formula" value="&lt;b&gt;GREEN ML SCORE (Artigo TCC)&lt;/b&gt;&lt;br&gt;&lt;br&gt;GMS = w_E · E_norm + w_C · C_norm + w_W · W_norm&lt;br&gt;&lt;br&gt;onde:&lt;br&gt;  E_norm = 1 - (E / E_max)   → Energia normalizada&lt;br&gt;  C_norm = 1 - (C / C_max)  → Carbono normalizado&lt;br&gt;  W_norm = 1 - (W / W_max) → Água normalizada&lt;br&gt;&lt;br&gt;Restrição: w_E + w_C + w_W = 1   |   GMS ∈ [0, 100]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="200" y="720" width="560" height="130" as="geometry"/>
+        </mxCell>
+        
+        <!-- Context weights -->
+        <mxCell id="context-weights" value="&lt;b&gt;Pesos Contextuais&lt;/b&gt;&lt;br&gt;Exemplos:&lt;br&gt;• Padrão: w=⅓ cada&lt;br&gt;• Alta emissão CO₂: w_C maior&lt;br&gt;• Escassez hídrica: w_W maior&lt;br&gt;• Energia cara: w_E maior" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;" vertex="1" parent="1">
+          <mxGeometry x="840" y="720" width="180" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Output GMS -->
+        <mxCell id="gms-output" value="&lt;b&gt;GMS [0-100]&lt;/b&gt;&lt;br&gt;Logged to MLflow" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="745" width="200" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows -->
+        <mxCell id="arrow-formula-output" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=3;strokeColor=#00FF00;" edge="1" parent="1" source="gms-formula" target="gms-output">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="arrow-context-formula" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;dashed=1;" edge="1" parent="1" source="context-weights" target="gms-formula">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Layer 5: Visualization -->
+        <mxCell id="layer5-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;opacity=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="870" width="1440" height="120" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="layer5-title" value="LAYER 5: VISUALIZATION &amp; ACCESS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="880" width="400" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Interfaces -->
+        <mxCell id="ui-mlflow" value="&lt;b&gt;MLflow UI (Implementado)&lt;/b&gt;&lt;br&gt;• Comparar experimentos&lt;br&gt;• Filtrar por GMS&lt;br&gt;• Log automático via Wrapper" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="200" y="920" width="200" height="60" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="ui-dvc" value="&lt;b&gt;DVC (Planejado)&lt;/b&gt;&lt;br&gt;• Versionar datasets&lt;br&gt;• Rastrear splits&lt;br&gt;• Reprodutibilidade" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;" vertex="1" parent="1">
+          <mxGeometry x="600" y="920" width="200" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Final output -->
+        <mxCell id="final-output" value="✅ &lt;b&gt;INFORMED MODEL SELECTION&lt;/b&gt; ✅&lt;br&gt;🌱 Sustainability Optimized 🌱" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="1020" width="800" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows to final -->
+        <mxCell id="arrow-ui1-final" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="ui-mlflow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="800" y="1020" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-ui2-final" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="ui-dashboard">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="800" y="1020" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-ui3-final" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;" edge="1" parent="1" source="ui-api">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="800" y="1020" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
