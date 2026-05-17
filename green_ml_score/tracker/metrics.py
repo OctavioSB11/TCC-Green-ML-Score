@@ -1,8 +1,25 @@
-def calculate_water_usage(energy_kwh: float, wue_liters_per_kwh: float = 1.8) -> float:
+def calculate_water_usage(energy_kwh: float,
+                          wue_liters_per_kwh: float = 1.8) -> float:
     """
-    Calcula o uso de água baseado na equação do artigo TCC:
-    W ≈ Energia (kWh) × WUE (litros/kWh)
-    
-    Um WUE médio de Data Centers é ~1.8 L/kWh.
+    Estima o consumo hídrico com base na equação do TCC:
+        W ≈ Energia (kWh) × WUE (litros/kWh)
+
+    Referência: Seção 2.7 do TCC — GreenML Score.
+
+    Parâmetros:
+        energy_kwh         : energia consumida em kWh
+        wue_liters_per_kwh : WUE do ambiente (litros por kWh).
+                             Valores de referência:
+                               Google Cloud  ≈ 0.9 L/kWh
+                               Microsoft Azure ≈ 1.1 L/kWh
+                               Média indústria ≈ 1.8 L/kWh
+
+    Retorno:
+        float: estimativa de água consumida em litros
     """
+    if energy_kwh < 0:
+        raise ValueError("energy_kwh não pode ser negativo.")
+    if wue_liters_per_kwh < 0:
+        raise ValueError("wue_liters_per_kwh não pode ser negativo.")
+
     return energy_kwh * wue_liters_per_kwh
