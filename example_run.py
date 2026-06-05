@@ -2,8 +2,8 @@ import time
 import mlflow
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
-from green_ml_score.callbacks.sklearn import GreenMLSklearnWrapper
-from green_ml_score.greenmlscore import NormalizationBounds
+from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
+from green_ml_score.scoring import NormalizationBounds
 
 def main():
     print("Gerando dataset...")
@@ -22,8 +22,14 @@ def main():
         # 3. Envolver seu modelo Scikit-Learn com o GreenML Wrapper
         base_rf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
         
-        # O Wrapper injeta o tracker no .fit()
-        green_rf = GreenMLSklearnWrapper(base_rf, bounds=bounds)
+        # O Wrapper injeta o tracker no .fit().
+        # IC regional (São Paulo ≈ 120 gCO2e/kWh) e WUE (Google 2024 ≈ 0.52 L/kWh),
+        # conforme protocolo experimental da Seção 5.4 do TCC.
+        green_rf = GreenMLSklearnWrapper(
+            base_rf,
+            bounds=bounds,
+            tracker_kwargs={"carbon_intensity_g_per_kwh": 120, "wue_liters_per_kwh": 0.52},
+        )
         
         # Para simular um treino demorado e forçar gasto energético
         start = time.time()

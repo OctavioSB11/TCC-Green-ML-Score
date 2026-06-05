@@ -3,8 +3,8 @@ Integração do GreenML Score com MLflow
 """
 import mlflow
 from typing import Optional
-from green_ml_score.greenmlscore import calculate_gms, NormalizationBounds, Weights
-from green_ml_score.tracker.core import GreenMLTracker
+from green_ml_score.scoring.gms import calculate_gms, NormalizationBounds, Weights
+from green_ml_score.collectors.codecarbon import GreenMLTracker
 
 def log_greenml_run(tracker: GreenMLTracker, 
                     bounds: NormalizationBounds, 

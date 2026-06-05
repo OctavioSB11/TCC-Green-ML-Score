@@ -1,5 +1,5 @@
 import pytest
-from green_ml_score.greenmlscore import (
+from green_ml_score.scoring import (
     EnvironmentalMetrics,
     NormalizationBounds,
     Weights,

@@ -65,10 +65,9 @@ class Weights:
     definido na Seção 6 do TCC — reflete abordagem neutra onde energia,
     carbono e água têm igual relevância.
 
-    Exemplos de configurações contextuais:
-        Escassez hídrica     → Weights(w_E=0.20, w_C=0.20, w_W=0.60)
-        Alta pegada carbono  → Weights(w_E=0.20, w_C=0.60, w_W=0.20)
-        Restrição energética → Weights(w_E=0.60, w_C=0.20, w_W=0.20)
+    Exemplos de configurações contextuais (conforme Seção 7 do TCC):
+        Alta intensidade de carbono → Weights(w_E=0.2, w_C=0.5, w_W=0.3)
+        Estresse hídrico            → Weights(w_E=0.3, w_C=0.2, w_W=0.5)
     """
     w_E: float = 1/3
     w_C: float = 1/3

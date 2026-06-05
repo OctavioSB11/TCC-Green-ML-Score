@@ -1,7 +1,7 @@
 from typing import Any, Optional
-from green_ml_score.tracker.core import GreenMLTracker
-from green_ml_score.greenml_mlflow import log_greenml_run
-from green_ml_score.greenmlscore import NormalizationBounds
+from green_ml_score.collectors.codecarbon import GreenMLTracker
+from green_ml_score.integrations.mlflow import log_greenml_run
+from green_ml_score.scoring.gms import NormalizationBounds
 
 class GreenMLSklearnWrapper:
     """
