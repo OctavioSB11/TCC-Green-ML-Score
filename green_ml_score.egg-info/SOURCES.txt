@@ -11,6 +11,5 @@ green_ml_score/callbacks/__init__.py
 green_ml_score/callbacks/sklearn.py
 green_ml_score/tracker/__init__.py
 green_ml_score/tracker/core.py
-green_ml_score/tracker/hardware.py
 green_ml_score/tracker/metrics.py
 tests/test_greenmlscore.py
