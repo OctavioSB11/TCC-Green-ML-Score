@@ -1,5 +1,4 @@
-def calculate_water_usage(energy_kwh: float,
-                          wue_liters_per_kwh: float = 1.8) -> float:
+def calculate_water_usage(energy_kwh: float, wue_liters_per_kwh: float = 1.8) -> float:
     """
     Estima o consumo hídrico com base na equação do TCC:
         W ≈ Energia (kWh) × WUE (litros/kWh)

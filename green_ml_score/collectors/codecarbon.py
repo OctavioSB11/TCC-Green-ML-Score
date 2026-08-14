@@ -20,9 +20,12 @@ class GreenMLTracker:
     os quais mudam entre versões.
     """
 
-    def __init__(self, wue_liters_per_kwh: float = 1.8,
-                 carbon_intensity_g_per_kwh: float = None,
-                 **codecarbon_kwargs):
+    def __init__(
+        self,
+        wue_liters_per_kwh: float = 1.8,
+        carbon_intensity_g_per_kwh: float = None,
+        **codecarbon_kwargs
+    ):
         """
         Parâmetros:
             wue_liters_per_kwh : WUE do ambiente de execução (L/kWh).
@@ -85,7 +88,8 @@ class GreenMLTracker:
             self.emissions_kg = measured_emissions
             self.carbon_intensity = (
                 measured_emissions / self.energy_kwh * 1000.0
-                if self.energy_kwh > 0 else 0.0
+                if self.energy_kwh > 0
+                else 0.0
             )
 
     def _read_energy_from_csv(self) -> float:

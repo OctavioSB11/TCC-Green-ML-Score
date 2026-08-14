@@ -4,8 +4,8 @@ from green_ml_score.estimators import (
     calculate_carbon_emissions,
 )
 
-
 # ── Estimador de carbono: C = E × IC_região (Seção 4.2.2 do TCC) ──────────────
+
 
 def test_carbon_emissions_formula():
     """1 kWh em São Paulo (IC=120 gCO2e/kWh) → 0.12 kg CO2e."""
@@ -32,6 +32,7 @@ def test_carbon_emissions_negative_intensity_raises():
 
 
 # ── Estimador de água: W ≈ E × WUE (Seção 2.8 do TCC) ─────────────────────────
+
 
 def test_water_usage_formula():
     """10 kWh com WUE do Google 2024 (0.52 L/kWh) → 5.2 L."""

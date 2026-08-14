@@ -1,5 +1,6 @@
-def calculate_carbon_emissions(energy_kwh: float,
-                               carbon_intensity_g_per_kwh: float) -> float:
+def calculate_carbon_emissions(
+    energy_kwh: float, carbon_intensity_g_per_kwh: float
+) -> float:
     """
     Calcula as emissões de carbono a partir da fórmula do TCC:
         C = E (kWh) × IC_região (gCO2e/kWh)

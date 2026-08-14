@@ -11,6 +11,7 @@ O núcleo de scoring (puro, sem dependências de I/O) é reexportado aqui.
 As camadas collectors/integrations devem ser importadas a partir de seus
 subpacotes, pois dependem de bibliotecas pesadas (codecarbon, mlflow).
 """
+
 from green_ml_score.scoring import (
     EnvironmentalMetrics,
     NormalizationBounds,

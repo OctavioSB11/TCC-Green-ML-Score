@@ -15,7 +15,7 @@ Tudo isso é condensado na métrica **GreenML Score (GMS)**. Matematicamente o G
 
 ```bash
 # Clone o repositório e instale em modo editável com as dependências de desenvolvimento
-git clone https://github.com/SeuUsuario/TCC-Green-ML-Score.git
+git clone https://github.com/OctavioSB11/TCC-Green-ML-Score.git
 cd TCC-Green-ML-Score
 pip install -e .[dev]
 ```
