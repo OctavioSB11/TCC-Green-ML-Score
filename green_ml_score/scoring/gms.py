@@ -8,19 +8,20 @@ Autor: Projeto TCC - GreenML
 from dataclasses import dataclass
 from typing import List
 
-
 # =========================
 # MODELOS DE DADOS
 # =========================
+
 
 @dataclass
 class EnvironmentalMetrics:
     """
     Dados ambientais de um modelo.
     """
-    energy: float   # kWh
-    carbon: float   # kg CO2
-    water: float    # litros
+
+    energy: float  # kWh
+    carbon: float  # kg CO2
+    water: float  # litros
 
 
 @dataclass
@@ -31,12 +32,15 @@ class NormalizationBounds:
     Pode ser instanciado manualmente ou calculado automaticamente
     a partir de uma lista de métricas via from_metrics_list().
     """
+
     energy_max: float
     carbon_max: float
     water_max: float
 
     @staticmethod
-    def from_metrics_list(metrics_list: List[EnvironmentalMetrics]) -> "NormalizationBounds":
+    def from_metrics_list(
+        metrics_list: List[EnvironmentalMetrics],
+    ) -> "NormalizationBounds":
         """
         Calcula os bounds automaticamente a partir dos dados reais dos modelos.
 
@@ -52,7 +56,7 @@ class NormalizationBounds:
         return NormalizationBounds(
             energy_max=max(m.energy for m in metrics_list),
             carbon_max=max(m.carbon for m in metrics_list),
-            water_max=max(m.water  for m in metrics_list),
+            water_max=max(m.water for m in metrics_list),
         )
 
 
@@ -65,14 +69,14 @@ class Weights:
     definido na Seção 6 do TCC — reflete abordagem neutra onde energia,
     carbono e água têm igual relevância.
 
-    Exemplos de configurações contextuais:
-        Escassez hídrica     → Weights(w_E=0.20, w_C=0.20, w_W=0.60)
-        Alta pegada carbono  → Weights(w_E=0.20, w_C=0.60, w_W=0.20)
-        Restrição energética → Weights(w_E=0.60, w_C=0.20, w_W=0.20)
+    Exemplos de configurações contextuais (conforme Seção 7 do TCC):
+        Alta intensidade de carbono → Weights(w_E=0.2, w_C=0.5, w_W=0.3)
+        Estresse hídrico            → Weights(w_E=0.3, w_C=0.2, w_W=0.5)
     """
-    w_E: float = 1/3
-    w_C: float = 1/3
-    w_W: float = 1/3
+
+    w_E: float = 1 / 3
+    w_C: float = 1 / 3
+    w_W: float = 1 / 3
 
     def validate(self):
         total = self.w_E + self.w_C + self.w_W
@@ -86,8 +90,8 @@ class Weights:
 # FUNÇÕES INTERNAS
 # =========================
 
-def _validate_inputs(metrics: EnvironmentalMetrics,
-                     bounds: NormalizationBounds):
+
+def _validate_inputs(metrics: EnvironmentalMetrics, bounds: NormalizationBounds):
     if metrics.energy < 0 or metrics.carbon < 0 or metrics.water < 0:
         raise ValueError("Valores ambientais não podem ser negativos.")
     if bounds.energy_max <= 0 or bounds.carbon_max <= 0 or bounds.water_max <= 0:
@@ -106,10 +110,13 @@ def _normalize(value: float, max_value: float) -> float:
 # FUNÇÃO PRINCIPAL
 # =========================
 
-def calculate_gms(metrics: EnvironmentalMetrics,
-                  bounds: NormalizationBounds,
-                  weights: Weights = None,
-                  scale_100: bool = False) -> float:
+
+def calculate_gms(
+    metrics: EnvironmentalMetrics,
+    bounds: NormalizationBounds,
+    weights: Weights = None,
+    scale_100: bool = False,
+) -> float:
     """
     Calcula o GreenML Score (GMS).
 
@@ -130,13 +137,9 @@ def calculate_gms(metrics: EnvironmentalMetrics,
 
     E_norm = _normalize(metrics.energy, bounds.energy_max)
     C_norm = _normalize(metrics.carbon, bounds.carbon_max)
-    W_norm = _normalize(metrics.water,  bounds.water_max)
+    W_norm = _normalize(metrics.water, bounds.water_max)
 
-    gms = (
-        weights.w_E * E_norm +
-        weights.w_C * C_norm +
-        weights.w_W * W_norm
-    )
+    gms = weights.w_E * E_norm + weights.w_C * C_norm + weights.w_W * W_norm
 
     gms = max(0.0, min(1.0, gms))
 
@@ -147,9 +150,10 @@ def calculate_gms(metrics: EnvironmentalMetrics,
 # FUNÇÃO DE DECOMPOSIÇÃO
 # =========================
 
-def explain_gms(metrics: EnvironmentalMetrics,
-                bounds: NormalizationBounds,
-                weights: Weights = None) -> dict:
+
+def explain_gms(
+    metrics: EnvironmentalMetrics, bounds: NormalizationBounds, weights: Weights = None
+) -> dict:
     """
     Retorna a decomposição completa do GMS por dimensão.
     Útil para análise, debug e tabelas do TCC.
@@ -162,16 +166,16 @@ def explain_gms(metrics: EnvironmentalMetrics,
 
     E_norm = _normalize(metrics.energy, bounds.energy_max)
     C_norm = _normalize(metrics.carbon, bounds.carbon_max)
-    W_norm = _normalize(metrics.water,  bounds.water_max)
+    W_norm = _normalize(metrics.water, bounds.water_max)
 
     return {
-        "E_norm":          round(E_norm, 6),
-        "C_norm":          round(C_norm, 6),
-        "W_norm":          round(W_norm, 6),
+        "E_norm": round(E_norm, 6),
+        "C_norm": round(C_norm, 6),
+        "W_norm": round(W_norm, 6),
         "weighted_energy": round(weights.w_E * E_norm, 6),
         "weighted_carbon": round(weights.w_C * C_norm, 6),
-        "weighted_water":  round(weights.w_W * W_norm, 6),
-        "GMS":             round(weights.w_E * E_norm +
-                                 weights.w_C * C_norm +
-                                 weights.w_W * W_norm, 6),
+        "weighted_water": round(weights.w_W * W_norm, 6),
+        "GMS": round(
+            weights.w_E * E_norm + weights.w_C * C_norm + weights.w_W * W_norm, 6
+        ),
     }

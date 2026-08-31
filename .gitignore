@@ -1,4 +1,29 @@
+# Byte-compiled / cache
 *.pyc
+__pycache__/
+
+# Ambientes e segredos
 *.env
+.venv/
+venv/
+
+# Build / empacotamento
+*.egg-info/
+build/
+dist/
+
+# Planilhas
 *.xlsx
+
+# Artefatos de execução
 *.db
+emissions.csv
+
+# Artefatos de MLflow / experimentos
+mlruns/
+
+# Dados e modelos versionados fora do git (use DVC)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep

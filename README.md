@@ -5,17 +5,17 @@ O **GreenML Score** é um framework profissional e automatizado para medir, rast
 Enquanto a maioria das bibliotecas foca apenas em Acurácia ou F1-Score (Red AI), o GreenML traz a sustentabilidade para o centro da tomada de decisão (Green AI), combinando o rastreamento em tempo real de hardware com uma métrica composta rigorosa.
 
 ## O que ele mede?
-1. **Consumo Energético (kWh):** Obtido diretamente do rastreamento de Hardware (CPU via `psutil` e GPU via `pynvml`).
-2. **Emissões de Carbono (kg CO2e):** Calculado com base na intensidade de carbono da matriz elétrica local.
-3. **Pegada Hídrica (Litros):** Estimado pelo fator WUE (Water Usage Effectiveness) típico de data centers.
+1. **Consumo Energético (kWh):** Medido via [CodeCarbon](https://github.com/mlco2/codecarbon), que instrumenta o hardware (RAPL para CPU Intel, NVML para GPU NVIDIA). A energia é lida do `emissions.csv` gerado pela ferramenta — abordagem estável entre versões.
+2. **Emissões de Carbono (kg CO2e):** Calculadas pela fórmula do TCC `C = E × IC_região` quando a intensidade de carbono regional é informada (ex.: São Paulo ≈ 120 gCO2e/kWh); caso contrário, usa a emissão medida pelo CodeCarbon.
+3. **Pegada Hídrica (Litros):** Estimada pelo proxy `W ≈ E × WUE` (Water Usage Effectiveness) típico de data centers.
 
-Tudo isso é condensado na métrica **GreenML Score (GMS)**, que varia de 0 a 100, onde valores maiores representam modelos mais sustentáveis e eficientes.
+Tudo isso é condensado na métrica **GreenML Score (GMS)**. Matematicamente o GMS pertence ao intervalo `[0, 1]` (Seção 4.1 do TCC) e pode ser escalonado para `[0, 100]` via `scale_100=True` para facilitar a leitura operacional — é nessa escala que a integração com MLflow o registra. Valores maiores representam modelos mais sustentáveis e eficientes.
 
 ## 🚀 Instalação
 
 ```bash
 # Clone o repositório e instale em modo editável com as dependências de desenvolvimento
-git clone https://github.com/SeuUsuario/TCC-Green-ML-Score.git
+git clone https://github.com/OctavioSB11/TCC-Green-ML-Score.git
 cd TCC-Green-ML-Score
 pip install -e .[dev]
 ```
@@ -29,8 +29,8 @@ O framework foi projetado para exigir o mínimo de alteração no seu código ex
 ```python
 import mlflow
 from sklearn.ensemble import RandomForestClassifier
-from green_ml_score.callbacks.sklearn import GreenMLSklearnWrapper
-from green_ml_score.greenmlscore import NormalizationBounds
+from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
+from green_ml_score.scoring import NormalizationBounds
 
 # 1. Defina seus limites máximos teóricos (para a normalização do GMS)
 bounds = NormalizationBounds(energy_max=1.5, carbon_max=0.2, water_max=2.7)
@@ -41,7 +41,12 @@ mlflow.set_experiment("GreenML_Demonstration")
 with mlflow.start_run():
     # 3. Envolva seu modelo com o nosso Wrapper!
     base_model = RandomForestClassifier()
-    green_model = GreenMLSklearnWrapper(base_model, bounds=bounds)
+    # IC regional (gCO2e/kWh) e WUE (L/kWh) opcionais — ex.: São Paulo + Google 2024
+    green_model = GreenMLSklearnWrapper(
+        base_model,
+        bounds=bounds,
+        tracker_kwargs={"carbon_intensity_g_per_kwh": 120, "wue_liters_per_kwh": 0.52},
+    )
     
     # Ao chamar .fit(), o Tracker de Hardware liga automaticamente em background!
     # Quando o .fit() acaba, os resultados vão magicamente para o MLflow.
