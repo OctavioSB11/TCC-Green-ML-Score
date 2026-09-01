@@ -40,5 +40,10 @@ def test_water_usage_formula():
 
 
 def test_water_usage_negative_energy_raises():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="energy_kwh"):
         calculate_water_usage(-1.0)
+
+
+def test_water_usage_negative_wue_raises():
+    with pytest.raises(ValueError, match="wue_liters_per_kwh"):
+        calculate_water_usage(10.0, -0.5)

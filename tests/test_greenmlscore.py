@@ -77,14 +77,39 @@ def test_normalization_bounds_from_metrics_list():
     assert bounds.water_max == 300
 
 
-def test_explain_gms_decomposition(
-    sample_metrics_model_a, sample_bounds, uniform_weights
-):
-    """explain_gms() deve retornar a decomposição correta por dimensão."""
-    explanation = explain_gms(sample_metrics_model_a, sample_bounds, uniform_weights)
+def test_normalization_bounds_empty_list_raises():
+    with pytest.raises(ValueError, match="A lista de métricas não pode estar vazia"):
+        NormalizationBounds.from_metrics_list([])
 
-    assert "E_norm" in explanation
-    assert "C_norm" in explanation
-    assert "W_norm" in explanation
-    assert "GMS" in explanation
-    assert abs(explanation["GMS"] - 0.4027) < 0.001
+
+def test_negative_weights_raises():
+    with pytest.raises(ValueError, match="Os pesos não podem ser negativos"):
+        Weights(w_E=-0.2, w_C=0.6, w_W=0.6).validate()
+
+
+def test_calculate_gms_negative_inputs_raise():
+    with pytest.raises(ValueError, match="não podem ser negativos"):
+        calculate_gms(
+            EnvironmentalMetrics(energy=-1.0, carbon=10, water=10),
+            NormalizationBounds(energy_max=100, carbon_max=100, water_max=100),
+        )
+
+
+def test_calculate_gms_zero_or_negative_bounds_raise():
+    with pytest.raises(ValueError, match="devem ser maiores que zero"):
+        calculate_gms(
+            EnvironmentalMetrics(energy=10, carbon=10, water=10),
+            NormalizationBounds(energy_max=0, carbon_max=100, water_max=100),
+        )
+
+
+def test_explain_gms_decomposition(sample_metrics_model_a, sample_bounds):
+    """explain_gms() deve funcionar com pesos padrão (None) e customizados."""
+    # Teste com pesos padrão (None)
+    exp_default = explain_gms(sample_metrics_model_a, sample_bounds)
+    assert abs(exp_default["GMS"] - 0.4027) < 0.001
+
+    # Teste com pesos customizados
+    weights_custom = Weights(w_E=0.5, w_C=0.3, w_W=0.2)
+    exp_custom = explain_gms(sample_metrics_model_a, sample_bounds, weights_custom)
+    assert "weighted_energy" in exp_custom
