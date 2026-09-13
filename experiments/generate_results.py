@@ -177,7 +177,9 @@ def plot_pareto_scatter(df_summary, output_dir):
             zorder=4,
         )
 
-        offset = custom_offsets.get(m, {"dx": 0.003, "dy": 2.0, "ha": "left", "va": "bottom"})
+        offset = custom_offsets.get(
+            m, {"dx": 0.003, "dy": 2.0, "ha": "left", "va": "bottom"}
+        )
         ax.annotate(
             f"{label}\n(GMS: {y:.1f} | Acc: {x*100:.1f}%)",
             xy=(x, y),
@@ -186,7 +188,9 @@ def plot_pareto_scatter(df_summary, output_dir):
             fontweight="bold",
             ha=offset["ha"],
             va=offset["va"],
-            bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=color, alpha=0.92, lw=1.2),
+            bbox=dict(
+                boxstyle="round,pad=0.35", fc="white", ec=color, alpha=0.92, lw=1.2
+            ),
             zorder=5,
         )
 
