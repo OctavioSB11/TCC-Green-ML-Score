@@ -125,7 +125,7 @@ def plot_gms_barchart(df_summary, output_dir):
     for ext in ["png", "svg"]:
         fig.savefig(os.path.join(output_dir, f"gms_comparison_barchart.{ext}"))
     plt.close(fig)
-    print("✓ Gráfico de barras do GMS gerado (sem sobreposição).")
+    print(" Gráfico de barras do GMS gerado (sem sobreposição).")
 
 
 def plot_pareto_scatter(df_summary, output_dir):
@@ -215,7 +215,7 @@ def plot_pareto_scatter(df_summary, output_dir):
     for ext in ["png", "svg"]:
         fig.savefig(os.path.join(output_dir, f"pareto_tradeoff_scatter.{ext}"))
     plt.close(fig)
-    print("✓ Gráfico de dispersão (Trade-off de Pareto) gerado (sem sobreposição).")
+    print(" Gráfico de dispersão (Trade-off de Pareto) gerado (sem sobreposição).")
 
 
 def plot_radar_chart(df_summary, output_dir):
@@ -286,7 +286,7 @@ def plot_radar_chart(df_summary, output_dir):
     for ext in ["png", "svg"]:
         fig.savefig(os.path.join(output_dir, f"radar_multidimensional_chart.{ext}"))
     plt.close(fig)
-    print("✓ Gráfico de radar (Spider Chart) gerado (sem sobreposição).")
+    print(" Gráfico de radar (Spider Chart) gerado (sem sobreposição).")
 
 
 def plot_energy_time_barchart(df_summary, output_dir):
@@ -335,7 +335,7 @@ def plot_energy_time_barchart(df_summary, output_dir):
     for ext in ["png", "svg"]:
         fig.savefig(os.path.join(output_dir, f"energy_and_time_comparison.{ext}"))
     plt.close(fig)
-    print("✓ Gráfico de consumo de energia e tempo gerado.")
+    print(" Gráfico de consumo de energia e tempo gerado.")
 
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -398,13 +398,13 @@ def generate_discussion_readme(df_summary, output_dir):
     """Gera documentação técnica com a análise dos resultados para subsidiar o TCC."""
     readme_path = os.path.join(output_dir, "README.md")
 
-    content = r"""# 📊 Resultados Experimentais e Análise de Sustentabilidade — GreenML Score
+    content = r"""#  Resultados Experimentais e Análise de Sustentabilidade — GreenML Score
 
 Este diretório reúne as visualizações gráficas e tabelas estatísticas geradas a partir das **12 execuções experimentais (4 modelos × 3 sementes aleatórias: 42, 123 e 2024)**, conforme protocolo metodológico definido na Seção 5 do TCC.
 
 ---
 
-## 🖼️ Visualizações Disponibilizadas (Formatos PNG 300 DPI e SVG Vetorial)
+## Visualizações Disponibilizadas (Formatos PNG 300 DPI e SVG Vetorial)
 
 1. **`gms_comparison_barchart.png / .svg`:**
    - Ranking oficial dos modelos ordenados pelo **GreenML Score médio**, com barras de erro representando o desvio padrão ($\sigma$) entre as sementes.
@@ -423,16 +423,14 @@ Este diretório reúne as visualizações gráficas e tabelas estatísticas gera
 
 ---
 
-## 🔬 Principais Conclusões Científicas para o TCC
+## Principais Conclusões Científicas para o TCC
 
 | Ranking | Modelo | Acurácia | Tempo (s) | Energia (kWh) | GreenML Score | Categoria |
 |:---:|---|:---:|:---:|:---:|:---:|:---:|
-| 🥇 1º | **Regressão Logística** | **0.9268** | **2.42s** | **0.000010** | **92.70 ± 2.14** | *Green AI Dominante* |
-| 🥈 2º | **Random Forest** | 0.8788 | 2.95s | 0.000023 | **82.29 ± 7.28** | *Intermediário Equilibrado* |
-| 🥉 3º | **Rede Neural (MLP)** | 0.9175 | 5.78s | 0.000042 | **68.22 ± 5.34** | *Alta Precisão / Custo Elevado* |
-| 4º | **XGBoost** | 0.8611 | 6.48s | 0.000102 | **21.83 ± 20.58** | *Red AI (Alto Overhead)* |
-
-### Insights para a Banca:
+| 1º | **Regressão Logística** | **0.9268** | **2.42s** | **0.000010** | **92.70 ± 2.14** | *Green AI Dominante* |
+| 2º | **Random Forest** | 0.8788 | 2.95s | 0.000023 | **82.29 ± 7.28** | *Intermediário Equilibrado* |
+| 3º | **Rede Neural (MLP)** | 0.9175 | 5.78s | 0.000042 | **68.22 ± 5.34** | *Alta Precisão / Custo Elevado* |
+| 4º | **XGBoost** | 0.8611 | 6.48s | 0.000102 | **21.83 ± 20.58** | *Red AI (Alto Overhead)* | ### Insights para a Banca:
 1. **Confirmação da Hipótese H3 (Eficiência Clássica):** A Regressão Logística provou que um modelo linear simples, bem parametrizado com TF-IDF, é capaz de atingir **92.68% de acurácia** gastando **10 vezes menos energia** que ensembles iterativos pesados, liderando com folga o GreenML Score (**92.70**).
 2. **Confirmação da Hipótese H1 (Tensão Red AI vs. Green AI):** O XGBoost e a Rede Neural MLP consumiram ordens de magnitude a mais de energia devido à complexidade computacional iterativa. No caso do XGBoost em matrizes esparsas de texto, o tempo de construção de árvores consecutivas elevou o consumo para 0.000102 kWh, resultando no menor GMS (**21.83**).
 3. **Fronteira de Pareto e Tomada de Decisão ESG:** O GreenML Score oferece uma régua objetiva para os times de MLOps identificarem que o ganho de acurácia marginal muitas vezes não justifica o custo ecológico e financeiro do modelo em produção.

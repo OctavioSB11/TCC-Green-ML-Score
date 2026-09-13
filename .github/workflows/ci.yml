@@ -24,10 +24,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+          cache-dependency-path: 'pyproject.toml'
 
       - name: Instalar Dependências do Pacote e Dev
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
           pip install -e .[dev]
 
       - name: Verificação de Estilo e Linting (Ruff)
@@ -39,5 +40,7 @@ jobs:
           black --check .
 
       - name: Executar Bateria de Testes com Cobertura (Pytest-cov)
+        env:
+          CODECARBON_OFFLINE_MODE: "true"
         run: |
           pytest --cov=green_ml_score --cov-report=term-missing

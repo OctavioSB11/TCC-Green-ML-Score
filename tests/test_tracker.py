@@ -14,7 +14,8 @@ from green_ml_score.collectors.codecarbon import GreenMLTracker
 from green_ml_score.scoring.gms import EnvironmentalMetrics
 
 
-def test_tracker_initialization_defaults():
+@patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
+def test_tracker_initialization_defaults(mock_emissions_tracker_cls):
     """Valida valores e configurações padrão na instanciação do GreenMLTracker."""
     tracker = GreenMLTracker(output_dir=".")
 
@@ -51,7 +52,10 @@ def test_tracker_start_and_stop_lifecycle(mock_emissions_tracker_cls):
     assert metrics.water == pytest.approx(0.002 * 1.8)
 
 
-def test_tracker_read_energy_from_csv_success(mock_emissions_csv_path):
+@patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
+def test_tracker_read_energy_from_csv_success(
+    mock_emissions_tracker_cls, mock_emissions_csv_path
+):
     """Testa a leitura correta de energy_consumed do arquivo emissions.csv real."""
     tracker = GreenMLTracker(output_dir=mock_emissions_csv_path)
 
@@ -61,7 +65,10 @@ def test_tracker_read_energy_from_csv_success(mock_emissions_csv_path):
     assert energy == pytest.approx(0.0015)
 
 
-def test_tracker_read_energy_missing_csv_safe_fallback(tmp_path):
+@patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
+def test_tracker_read_energy_missing_csv_safe_fallback(
+    mock_emissions_tracker_cls, tmp_path
+):
     """Testa a resiliência do tracker quando o arquivo emissions.csv não existe (retorna 0.0)."""
     tracker = GreenMLTracker(output_dir=str(tmp_path))
 

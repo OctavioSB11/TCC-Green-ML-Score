@@ -1,5 +1,5 @@
 <p align="center">
-  <strong>🍃 GreenML Score Framework</strong>
+  <strong> GreenML Score Framework</strong>
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 
 ---
 
-## 📋 Sobre o Projeto
+## Sobre o Projeto
 
 O **GreenML Score** é um framework Python profissional e automatizado para **medir, rastrear e reportar o impacto ambiental de modelos de Machine Learning**.
 
@@ -31,13 +31,11 @@ Enquanto a maioria das ferramentas de ML foca exclusivamente em métricas predit
 
 | Dimensão | Unidade | Fonte |
 |---|---|---|
-| ⚡ **Consumo Energético** | kWh | [CodeCarbon](https://github.com/mlco2/codecarbon) (RAPL / NVML) |
-| 🌍 **Emissões de Carbono** | kg CO₂e | `C = E × IC_região` |
-| 💧 **Pegada Hídrica** | Litros | `W = E × WUE` |
+| **Consumo Energético** | kWh | [CodeCarbon](https://github.com/mlco2/codecarbon) (RAPL / NVML) |
+| **Emissões de Carbono** | kg CO₂e | `C = E × IC_região` |
+| **Pegada Hídrica** | Litros | `W = E × WUE` | ---
 
----
-
-## 🧮 A Métrica: GreenML Score (GMS)
+## A Métrica: GreenML Score (GMS)
 
 O GMS é uma métrica composta que pertence ao intervalo **[0, 1]** (ou **[0, 100]** na escala operacional). Valores maiores representam modelos **mais sustentáveis e eficientes**.
 
@@ -58,9 +56,7 @@ X̂ = 1 − (X / X_max)
 | `w_E` | Peso da dimensão energética | 1/3 |
 | `w_C` | Peso da dimensão de carbono | 1/3 |
 | `w_W` | Peso da dimensão hídrica | 1/3 |
-| `X_max` | Maior valor observado no conjunto de modelos comparados | Auto |
-
-> **Interpretação:** Quanto menor o consumo de recursos (energia, carbono, água), maior o GMS. Um GMS de 100 indica o modelo mais eficiente do grupo; um GMS próximo de 0 indica o mais custoso.
+| `X_max` | Maior valor observado no conjunto de modelos comparados | Auto | > **Interpretação:** Quanto menor o consumo de recursos (energia, carbono, água), maior o GMS. Um GMS de 100 indica o modelo mais eficiente do grupo; um GMS próximo de 0 indica o mais custoso.
 
 ### Pesos Contextuais (Seção 7 do TCC)
 
@@ -70,32 +66,30 @@ Os pesos podem ser ajustados conforme o contexto operacional:
 |---|:---:|:---:|:---:|---|
 | Neutro (padrão) | 1/3 | 1/3 | 1/3 | Sem viés dimensional |
 | Alta intensidade de carbono | 0.2 | 0.5 | 0.3 | Regiões com grid elétrico fóssil |
-| Estresse hídrico | 0.3 | 0.2 | 0.5 | Data centers em regiões áridas |
+| Estresse hídrico | 0.3 | 0.2 | 0.5 | Data centers em regiões áridas | ---
 
----
-
-## 🏗️ Arquitetura
+## Arquitetura
 
 O framework é organizado em **4 camadas** independentes e desacopladas:
 
 ```mermaid
 graph TB
     subgraph "Camada 1 — Collectors"
-        A["🔌 CodeCarbon Adapter<br/><i>Instrumentação de Hardware</i>"]
+        A[" CodeCarbon Adapter<br/><i>Instrumentação de Hardware</i>"]
     end
 
     subgraph "Camada 2 — Estimators"
-        B["🌍 Carbon Estimator<br/><i>E × IC_região → kg CO₂e</i>"]
-        C["💧 Water Estimator<br/><i>E × WUE → Litros</i>"]
+        B[" Carbon Estimator<br/><i>E × IC_região → kg CO₂e</i>"]
+        C[" Water Estimator<br/><i>E × WUE → Litros</i>"]
     end
 
     subgraph "Camada 3 — Scoring"
-        D["📊 GMS Calculator<br/><i>Normalização Inversa + Pesos</i>"]
+        D[" GMS Calculator<br/><i>Normalização Inversa + Pesos</i>"]
     end
 
     subgraph "Camada 4 — Integrations"
-        E["🔗 MLflow Logger"]
-        F["🤖 Sklearn Wrapper"]
+        E[" MLflow Logger"]
+        F[" Sklearn Wrapper"]
     end
 
     A -->|"energia kWh"| B
@@ -117,7 +111,7 @@ graph TB
 
 ---
 
-## 🚀 Instalação
+## Instalação
 
 ```bash
 # Clone o repositório
@@ -137,7 +131,7 @@ pip install -e .[experiments]
 
 ---
 
-## 💻 Como Usar
+## Como Usar
 
 ### Integração com Scikit-Learn (Fricção Zero)
 
@@ -169,7 +163,7 @@ with mlflow.start_run():
 
     # 4. Ao chamar .fit(), o Tracker liga automaticamente em background!
     green_model.fit(X_train, y_train)
-    # → Métricas ambientais logadas automaticamente no MLflow ✓
+    # → Métricas ambientais logadas automaticamente no MLflow 
 ```
 
 ### Uso Direto da API de Scoring
@@ -199,18 +193,16 @@ print(decomposition)
 
 ---
 
-## 📊 Resultados Experimentais
+## Resultados Experimentais
 
 Experimento comparativo com **4 modelos** no dataset **IMDb Reviews** (25k amostras de análise de sentimento), cada um executado com **3 sementes aleatórias** (42, 123, 2024):
 
 | Ranking | Modelo | Acurácia | Tempo (s) | Energia (kWh) | GMS (0–100) |
 |:---:|---|:---:|:---:|:---:|:---:|
-| 🥇 1º | **Regressão Logística** | 0.9268 | 2.42 | 0.000010 | **92.70 ± 2.14** |
-| 🥈 2º | **Random Forest** | 0.8788 | 2.95 | 0.000023 | **82.29 ± 7.28** |
-| 🥉 3º | **Rede Neural (MLP)** | 0.9175 | 5.78 | 0.000042 | **68.22 ± 5.34** |
-| 4º | **XGBoost** | 0.8611 | 6.48 | 0.000102 | **21.83 ± 20.58** |
-
-> 📈 Gráficos completos (PNG 300 DPI e SVG vetorial), tabela LaTeX e análise detalhada disponíveis em [`docs/Results/`](docs/Results/).
+| 1º | **Regressão Logística** | 0.9268 | 2.42 | 0.000010 | **92.70 ± 2.14** |
+| 2º | **Random Forest** | 0.8788 | 2.95 | 0.000023 | **82.29 ± 7.28** |
+| 3º | **Rede Neural (MLP)** | 0.9175 | 5.78 | 0.000042 | **68.22 ± 5.34** |
+| 4º | **XGBoost** | 0.8611 | 6.48 | 0.000102 | **21.83 ± 20.58** | >  Gráficos completos (PNG 300 DPI e SVG vetorial), tabela LaTeX e análise detalhada disponíveis em [`docs/Results/`](docs/Results/).
 
 ### Principais Conclusões
 
@@ -220,7 +212,7 @@ Experimento comparativo com **4 modelos** no dataset **IMDb Reviews** (25k amost
 
 ---
 
-## 📊 Visualizando Resultados no MLflow
+## Visualizando Resultados no MLflow
 
 ```bash
 mlflow ui
@@ -230,7 +222,7 @@ Abra o navegador em `http://127.0.0.1:5000` para visualizar todas as métricas a
 
 ---
 
-## 🧪 Testes
+## Testes
 
 O framework possui **32 testes unitários** cobrindo todas as camadas da arquitetura:
 
@@ -244,7 +236,7 @@ pytest --cov=green_ml_score --cov-report=term-missing
 
 ---
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 TCC-Green-ML-Score/
@@ -272,7 +264,7 @@ TCC-Green-ML-Score/
 
 ---
 
-## 📝 Citação (BibTeX)
+## Citação (BibTeX)
 
 Se este framework ou o artigo associado foi útil para a sua pesquisa, por favor cite:
 
@@ -289,7 +281,7 @@ Se este framework ou o artigo associado foi útil para a sua pesquisa, por favor
 
 ---
 
-## 🤝 Contribuindo
+## Contribuindo
 
 Contribuições são bem-vindas! Consulte o guia completo em [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
@@ -305,13 +297,13 @@ pytest                # Testes
 
 ---
 
-## 📄 Licença
+## Licença
 
 Este projeto está licenciado sob a [MIT License](LICENSE).
 
 ---
 
-## 👥 Autores
+## Autores
 
 - **Octavio Bordotti** — [GitHub](https://github.com/OctavioSB11)
 - **Danilo Parolin**

@@ -1,4 +1,4 @@
-# Guia de Contribuição — GreenML Score 🍃
+# Guia de Contribuição — GreenML Score 
 
 Agradecemos imensamente o seu interesse em contribuir para o **GreenML Score** (`green-ml-score`)! Este é um framework Python de código aberto dedicado a mensurar, monitorar e reportar o impacto ambiental de modelos de Machine Learning (iniciativa *Green AI*). Toda e qualquer contribuição é bem-vinda para tornar o desenvolvimento de inteligência artificial mais sustentável, consciente e rigoroso.
 
@@ -6,7 +6,7 @@ Este documento estabelece as diretrizes, padrões de código e o fluxo de trabal
 
 ---
 
-## 📑 Sumário
+## Sumário
 
 1. [Como Contribuir](#1-como-contribuir)
 2. [Pré-requisitos](#2-pré-requisitos)
@@ -43,9 +43,7 @@ Antes de iniciar a configuração do ambiente, certifique-se de possuir as ferra
 | :--- | :--- | :--- |
 | **Python** | `3.10+` | O framework é testado e suportado oficialmente em Python `3.10`, `3.11`, `3.12` e `3.13`. |
 | **Git** | Versão recente | Para versionamento e envio de branches. |
-| **pip** | Atualizado | Gerenciador de pacotes padrão do Python (`python -m pip install --upgrade pip`). |
-
-> [!TIP]
+| **pip** | Atualizado | Gerenciador de pacotes padrão do Python (`python -m pip install --upgrade pip`). | > [!TIP]
 > Embora a suíte de testes unitários execute com mocks e emulações em qualquer máquina (sem depender de hardware específico), medições físicas em tempo real utilizam a biblioteca [CodeCarbon](https://github.com/mlco2/codecarbon). Para testes com medições físicas reais, recomenda-se processadores com suporte a Intel RAPL ou placas de vídeo NVIDIA com suporte a NVML.
 
 ---
@@ -269,9 +267,7 @@ Adotamos a convenção de [Conventional Commits](https://www.conventionalcommits
 | `refactor` | Refatoração de código sem alteração funcional | `refactor(tracker): modularizar extracao do emissions.csv` |
 | `perf` | Otimização de desempenho ou tempo de processamento | `perf(scoring): vetorizar calculo das pontuacoes parciais` |
 | `chore` | Alterações em ferramentas de build, dependências ou tarefas | `chore(deps): atualizar dependencia do scikit-learn` |
-| `ci` | Modificações em scripts e configurações do GitHub Actions | `ci: adicionar execucao de testes no python 3.13` |
-
-### Boas Práticas para Commits:
+| `ci` | Modificações em scripts e configurações do GitHub Actions | `ci: adicionar execucao de testes no python 3.13` | ### Boas Práticas para Commits:
 - Descreva a ação no tempo presente/imperativo (ex.: `adicionar`, `corrigir`, `atualizar`).
 - A primeira linha deve ter no máximo 72 caracteres e não deve terminar com ponto final.
 - Evite commits aglutinados com alterações não relacionadas; divida em commits atômicos e coesos.
@@ -289,15 +285,15 @@ Encontrou um erro, falha ou resultado divergente da fórmula matemática propost
 ### Template Sugerido para Relato de Bug:
 
 ```markdown
-### 🐛 Descrição do Problema
+### Descrição do Problema
 Uma descrição clara e concisa do comportamento inesperado encontrado.
 
-### 🔁 Passos para Reproduzir
+### Passos para Reproduzir
 1. Inicializar o wrapper com as opções '...'
 2. Invocar o método `.fit()` com os dados '...'
 3. Obter a exceção/erro no console.
 
-### 💻 Exemplo Mínimo Reproduzível (MRE)
+### Exemplo Mínimo Reproduzível (MRE)
 ```python
 import mlflow
 from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
@@ -305,10 +301,10 @@ from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
 # Código simplificado que reproduz a falha
 ```
 
-### 🎯 Comportamento Esperado
+### Comportamento Esperado
 O que deveria acontecer quando o código fosse executado corretamente.
 
-### 📋 Logs e Stack Trace
+### Logs e Stack Trace
 Cole a saída de erro completa gerada pelo terminal:
 ```text
 Traceback (most recent call last):
@@ -316,7 +312,7 @@ Traceback (most recent call last):
     ...
 ```
 
-### ⚙️ Informações do Ambiente
+### Informações do Ambiente
 - **Sistema Operacional:** [ex.: Windows 11, Ubuntu 22.04, macOS Sonoma]
 - **Versão do Python:** [ex.: 3.11.8]
 - **Versão do GreenML Score:** [ex.: 0.1.0 ou hash do commit]
@@ -326,7 +322,7 @@ Traceback (most recent call last):
   - `mlflow`:
   - `scikit-learn`:
 
-### 📌 Informações Adicionais
+### Informações Adicionais
 Capturas de tela, contexto do experimento ou observações complementares.
 ```
 
@@ -345,26 +341,26 @@ Para propor uma melhoria, otimização ou nova integração:
 2. Crie uma nova issue e forneça as seguintes informações estruturadas:
 
 ```markdown
-### 💡 Contexto e Motivação
+### Contexto e Motivação
 Qual necessidade ou problema motivou esta sugestão? Por que essa funcionalidade seria benéfica para os usuários do GreenML Score?
 
-### 🚀 Solução Proposta
+### Solução Proposta
 Descreva com clareza o comportamento da funcionalidade proposta. Se aplicável, demonstre um exemplo conceitual de uso:
 
 ```python
 # Exemplo de uso da API proposta
 ```
 
-### 🔍 Alternativas Consideradas
+### Alternativas Consideradas
 Existem outras formas ou ferramentas que solucionam isso hoje? Por que a proposta sugerida é preferível?
 
-### 🍃 Impacto no Green AI
+### Impacto no Green AI
 De que maneira essa alteração contribui para o cálculo mais preciso, acessível ou padronizado de sustentabilidade em Machine Learning?
 ```
 
 ---
 
-## 👥 Mantenedores e Contato
+## Mantenedores e Contato
 
 O **GreenML Score** é mantido ativamente por:
 - **Octavio Bordotti**
@@ -374,4 +370,4 @@ O **GreenML Score** é mantido ativamente por:
 - **Central de Issues:** [https://github.com/OctavioSB11/TCC-Green-ML-Score/issues](https://github.com/OctavioSB11/TCC-Green-ML-Score/issues)
 - **Pull Requests:** [https://github.com/OctavioSB11/TCC-Green-ML-Score/pulls](https://github.com/OctavioSB11/TCC-Green-ML-Score/pulls)
 
-Agradecemos profundamente pela sua contribuição para uma Inteligência Artificial mais verde e sustentável! 🍃
+Agradecemos profundamente pela sua contribuição para uma Inteligência Artificial mais verde e sustentável! 

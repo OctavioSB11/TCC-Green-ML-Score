@@ -1,10 +1,10 @@
-# 🧪 Experimento Comparativo — GreenML Score (Seção 5 do TCC)
+# Experimento Comparativo — GreenML Score (Seção 5 do TCC)
 
 Este repositório contém a infraestrutura e o protocolo experimental para avaliação empírica do **GreenML Score (GMS)** comparando modelos de Machine Learning clássicos (*Green AI*) e redes profundas (*Red AI*).
 
 ---
 
-## 🎯 Hipóteses de Trabalho (Seção 5.6 do TCC)
+## Hipóteses de Trabalho (Seção 5.6 do TCC)
 
 * **H1 (Tensão Red AI vs Green AI):** Modelos complexos de alta capacidade preditiva (ex.: BERT-base / Deep Models) atingem maior acurácia, porém registram o menor **GreenML Score (GMS)** sob pesos uniformes.
 * **H2 (Fronteira de Pareto com Distillation):** Modelos otimizados/comprimidos (ex.: DistilBERT / XGBoost) posicionam-se na fronteira de Pareto entre acurácia preditiva e sustentabilidade ambiental.
@@ -12,7 +12,7 @@ Este repositório contém a infraestrutura e o protocolo experimental para avali
 
 ---
 
-## ⚙️ Protocolo Experimental (Seção 5.4 do TCC)
+## Protocolo Experimental (Seção 5.4 do TCC)
 
 | Parâmetro | Valor Padrão | Descrição |
 |---|---|---|
@@ -20,11 +20,9 @@ Este repositório contém a infraestrutura e o protocolo experimental para avali
 | **Fator Hídrico (WUE)** | `0.52 L/kWh` | Eficiência de uso de água em Data Centers (Google 2024) |
 | **Sementes Aleatórias (Seeds)** | `[42, 123, 2024]` | Múltiplas execuções para média e desvio padrão |
 | **Normalização** | `Global Bounds` | `NormalizationBounds.from_metrics_list()` sobre todos os modelos |
-| **Pesos Padrão** | `w_E = w_C = w_W = 1/3` | Distribuição uniforme neutra |
+| **Pesos Padrão** | `w_E = w_C = w_W = 1/3` | Distribuição uniforme neutra | ---
 
----
-
-## 🚀 Como Executar
+## Como Executar
 
 ### 1. Teste Rápido (Quick Run)
 Executa em poucos segundos usando um subset do dataset de benchmark para validação ágil da pipeline:
@@ -49,7 +47,7 @@ python experiments/comparative_experiment.py --models all --seeds 42 123 2024
 
 ---
 
-## 📊 Visualização no MLflow
+## Visualização no MLflow
 
 Após a execução, inicie a interface do MLflow para visualizar a dashboard comparativa e gráficos nativos:
 

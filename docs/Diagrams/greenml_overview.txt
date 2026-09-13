@@ -15,15 +15,15 @@
           <mxGeometry x="384.5" y="80" width="400" height="120" as="geometry"/>
         </mxCell>
         
-        <mxCell id="dataset-vision" value="📷 Visão: CIFAR-10 (60k imagens)" style="text;strokeColor=#b85450;fillColor=#f8cecc;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="datasets-container">
+        <mxCell id="dataset-vision" value=" Visão: CIFAR-10 (60k imagens)" style="text;strokeColor=#b85450;fillColor=#f8cecc;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="datasets-container">
           <mxGeometry y="30" width="400" height="30" as="geometry"/>
         </mxCell>
         
-        <mxCell id="dataset-nlp" value="💬 NLP: TweetSentBR (15k tweets)" style="text;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="datasets-container">
+        <mxCell id="dataset-nlp" value=" NLP: TweetSentBR (15k tweets)" style="text;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="datasets-container">
           <mxGeometry y="60" width="400" height="30" as="geometry"/>
         </mxCell>
         
-        <mxCell id="dataset-tabular" value="📊 Tabular: Fraud Detection (284k transações)" style="text;strokeColor=#82b366;fillColor=#d5e8d4;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="datasets-container">
+        <mxCell id="dataset-tabular" value=" Tabular: Fraud Detection (284k transações)" style="text;strokeColor=#82b366;fillColor=#d5e8d4;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="datasets-container">
           <mxGeometry y="90" width="400" height="30" as="geometry"/>
         </mxCell>
         
@@ -43,7 +43,7 @@
         </mxCell>
         
         <!-- Training Pipeline -->
-        <mxCell id="training-box" value="&lt;b&gt;TRAINING PIPELINE&lt;/b&gt;&lt;br&gt;&lt;br&gt;🔧 Treinamento de Modelos&lt;br&gt;📊 CodeCarbon (Monitoramento Energético)&lt;br&gt;💧 Cálculo WUE (Impacto Hídrico)&lt;br&gt;✅ Avaliação de Performance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" vertex="1" parent="1">
+        <mxCell id="training-box" value="&lt;b&gt;TRAINING PIPELINE&lt;/b&gt;&lt;br&gt;&lt;br&gt; Treinamento de Modelos&lt;br&gt; CodeCarbon (Monitoramento Energético)&lt;br&gt; Cálculo WUE (Impacto Hídrico)&lt;br&gt; Avaliação de Performance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="384.5" y="300" width="400" height="110" as="geometry"/>
         </mxCell>
         
@@ -53,7 +53,7 @@
         </mxCell>
         
         <!-- MLflow -->
-        <mxCell id="mlflow-box" value="&lt;b&gt;MLFLOW TRACKING&lt;/b&gt;&lt;br&gt;&lt;br&gt;📊 Métricas de Performance (Acurácia, F1)&lt;br&gt;⚡ Energia (kWh) via CodeCarbon&lt;br&gt;🌫️ Carbono (kg CO₂e)&lt;br&gt;💧 Água (L) via WUE&lt;br&gt;⭐ &lt;b&gt;Green ML Score (GMS)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" vertex="1" parent="1">
+        <mxCell id="mlflow-box" value="&lt;b&gt;MLFLOW TRACKING&lt;/b&gt;&lt;br&gt;&lt;br&gt; Métricas de Performance (Acurácia, F1)&lt;br&gt; Energia (kWh) via CodeCarbon&lt;br&gt; Carbono (kg CO₂e)&lt;br&gt; Água (L) via WUE&lt;br&gt;⭐ &lt;b&gt;Green ML Score (GMS)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="384.5" y="440" width="400" height="100" as="geometry"/>
         </mxCell>
         
@@ -101,7 +101,7 @@
         </mxCell>
         
         <!-- Final Output -->
-        <mxCell id="output-box" value="✅ Seleção Informada de Modelos&lt;br&gt;🌱 Sustentabilidade Otimizada" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+        <mxCell id="output-box" value=" Seleção Informada de Modelos&lt;br&gt; Sustentabilidade Otimizada" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;" vertex="1" parent="1">
           <mxGeometry x="384.5" y="730" width="400" height="60" as="geometry"/>
         </mxCell>
         

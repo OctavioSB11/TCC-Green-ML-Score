@@ -56,6 +56,16 @@ class GreenMLTracker:
         if "output_dir" not in codecarbon_kwargs:
             codecarbon_kwargs["output_dir"] = "."
 
+        # Resiliência para CI/headless: se CODECARBON_OFFLINE_MODE estiver ativo ou offline for True
+        if os.environ.get("CODECARBON_OFFLINE_MODE") == "true":
+            codecarbon_kwargs["offline"] = True
+
+        if (
+            codecarbon_kwargs.get("offline")
+            and "country_iso_code" not in codecarbon_kwargs
+        ):
+            codecarbon_kwargs["country_iso_code"] = "BRA"
+
         self._output_dir = codecarbon_kwargs["output_dir"]
         self.tracker = EmissionsTracker(**codecarbon_kwargs)
 

@@ -299,7 +299,7 @@ def run_experiment():
 
     with open(md_summary, "w", encoding="utf-8") as f:
         f.write(
-            "# 📊 Resumo Estatístico dos Experimentos Comparativos — GreenML Score\n\n"
+            "#  Resumo Estatístico dos Experimentos Comparativos — GreenML Score\n\n"
         )
         f.write(df_summary.to_markdown(index=False))
         f.write("\n")

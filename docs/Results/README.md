@@ -1,10 +1,10 @@
-# 📊 Resultados Experimentais — GreenML Score
+# Resultados Experimentais — GreenML Score
 
 Este diretório reúne as **visualizações gráficas** e **tabelas estatísticas** geradas a partir das 12 execuções experimentais (4 modelos × 3 sementes aleatórias: 42, 123 e 2024), conforme protocolo metodológico definido na Seção 5 do TCC.
 
 ---
 
-## 🔬 Protocolo Experimental
+## Protocolo Experimental
 
 | Parâmetro | Valor |
 |---|---|
@@ -15,11 +15,9 @@ Este diretório reúne as **visualizações gráficas** e **tabelas estatística
 | **Sementes** | 42, 123, 2024 |
 | **IC regional** | 120 gCO₂e/kWh (São Paulo, Brasil) |
 | **WUE** | 0.52 L/kWh (Google 2024) |
-| **Pesos do GMS** | Uniformes (w_E = w_C = w_W = 1/3) |
+| **Pesos do GMS** | Uniformes (w_E = w_C = w_W = 1/3) | ---
 
----
-
-## 🖼️ Visualizações Geradas
+## Visualizações Geradas
 
 Todos os gráficos estão disponíveis em **PNG (300 DPI)** para uso em documentos e **SVG vetorial** para escalonamento sem perda.
 
@@ -60,24 +58,22 @@ Tabela formal formatada em LaTeX com o pacote `booktabs`, pronta para importaç�
 
 ---
 
-## 📈 Resultados Consolidados
+## Resultados Consolidados
 
 | Ranking | Modelo | Acurácia | Tempo (s) | Energia (kWh) | GreenML Score | Categoria |
 |:---:|---|:---:|:---:|:---:|:---:|:---:|
-| 🥇 1º | **Regressão Logística** | 0.9268 | 2.42s | 0.000010 | **92.70 ± 2.14** | *Green AI Dominante* |
-| 🥈 2º | **Random Forest** | 0.8788 | 2.95s | 0.000023 | **82.29 ± 7.28** | *Intermediário Equilibrado* |
-| 🥉 3º | **Rede Neural (MLP)** | 0.9175 | 5.78s | 0.000042 | **68.22 ± 5.34** | *Alta Precisão / Custo Elevado* |
-| 4º | **XGBoost** | 0.8611 | 6.48s | 0.000102 | **21.83 ± 20.58** | *Red AI (Alto Overhead)* |
+| 1º | **Regressão Logística** | 0.9268 | 2.42s | 0.000010 | **92.70 ± 2.14** | *Green AI Dominante* |
+| 2º | **Random Forest** | 0.8788 | 2.95s | 0.000023 | **82.29 ± 7.28** | *Intermediário Equilibrado* |
+| 3º | **Rede Neural (MLP)** | 0.9175 | 5.78s | 0.000042 | **68.22 ± 5.34** | *Alta Precisão / Custo Elevado* |
+| 4º | **XGBoost** | 0.8611 | 6.48s | 0.000102 | **21.83 ± 20.58** | *Red AI (Alto Overhead)* | ---
 
----
+## Análise e Conclusões Científicas
 
-## 🔍 Análise e Conclusões Científicas
-
-### Hipótese H3 — Eficiência de Modelos Clássicos (Confirmada ✓)
+### Hipótese H3 — Eficiência de Modelos Clássicos (Confirmada )
 
 A Regressão Logística provou que um modelo linear simples, bem parametrizado com TF-IDF, é capaz de atingir **92.68% de acurácia** gastando **10× menos energia** que ensembles iterativos pesados, liderando com folga o GreenML Score (**92.70**).
 
-### Hipótese H1 — Tensão Red AI vs. Green AI (Confirmada ✓)
+### Hipótese H1 — Tensão Red AI vs. Green AI (Confirmada )
 
 O XGBoost e a Rede Neural MLP consumiram ordens de magnitude a mais de energia devido à complexidade computacional iterativa. No caso do XGBoost em matrizes esparsas de texto, o tempo de construção de árvores consecutivas elevou o consumo para 0.000102 kWh, resultando no menor GMS (**21.83**).
 
@@ -87,7 +83,7 @@ O GreenML Score oferece uma **régua objetiva** para times de MLOps identificare
 
 ---
 
-## 📂 Reprodução dos Resultados
+## Reprodução dos Resultados
 
 ```bash
 # 1. Executar o experimento comparativo

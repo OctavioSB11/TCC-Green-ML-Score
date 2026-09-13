@@ -178,7 +178,7 @@
         </mxCell>
         
         <!-- GMS Formula -->
-        <mxCell id="gms-formula" value="&lt;b&gt;GREEN ML SCORE (Artigo TCC)&lt;/b&gt;&lt;br&gt;&lt;br&gt;GMS = w_E · E_norm + w_C · C_norm + w_W · W_norm&lt;br&gt;&lt;br&gt;onde:&lt;br&gt;  E_norm = 1 - (E / E_max)   → Energia normalizada&lt;br&gt;  C_norm = 1 - (C / C_max)  → Carbono normalizado&lt;br&gt;  W_norm = 1 - (W / W_max) → Água normalizada&lt;br&gt;&lt;br&gt;Restrição: w_E + w_C + w_W = 1   |   GMS ∈ [0, 100]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="gms-formula" value="&lt;b&gt;GREEN ML SCORE (Artigo TCC)&lt;/b&gt;&lt;br&gt;&lt;br&gt;GMS = w_E · E_norm + w_C · C_norm + w_W · W_norm&lt;br&gt;&lt;br&gt;onde:&lt;br&gt;  E_norm = 1 - (E / E_max)   → Energia normalizada&lt;br&gt;  C_norm = 1 - (C / C_max)  → Carbono normalizado&lt;br&gt;  W_norm = 1 - (W / W_max) → Água normalizada&lt;br&gt;&lt;br&gt;Restrição: w_E + w_C + w_W = 1   | GMS ∈ [0, 100]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="200" y="720" width="560" height="130" as="geometry"/>
         </mxCell>
         
@@ -220,7 +220,7 @@
         </mxCell>
         
         <!-- Final output -->
-        <mxCell id="final-output" value="✅ &lt;b&gt;INFORMED MODEL SELECTION&lt;/b&gt; ✅&lt;br&gt;🌱 Sustainability Optimized 🌱" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1" vertex="1" parent="1">
+        <mxCell id="final-output" value=" &lt;b&gt;INFORMED MODEL SELECTION&lt;/b&gt; &lt;br&gt; Sustainability Optimized " style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1" vertex="1" parent="1">
           <mxGeometry x="400" y="1020" width="800" height="60" as="geometry"/>
         </mxCell>
         
