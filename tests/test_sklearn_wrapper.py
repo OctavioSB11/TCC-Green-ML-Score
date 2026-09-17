@@ -13,12 +13,15 @@ import pytest
 from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
 
 
-def test_wrapper_fit_lifecycle_success(sample_bounds):
+@patch("green_ml_score.integrations.sklearn.GreenMLTracker")
+def test_wrapper_fit_lifecycle_success(mock_tracker_cls, sample_bounds):
     """Garante que .fit() inicia o tracker, treina o modelo base e para o tracker."""
     # Arrange
     mock_base_model = MagicMock()
+    mock_tracker_instance = MagicMock()
+    mock_tracker_cls.return_value = mock_tracker_instance
+
     wrapper = GreenMLSklearnWrapper(model=mock_base_model, bounds=sample_bounds)
-    wrapper.tracker = MagicMock()
 
     X = [[1, 2], [3, 4]]
     y = [0, 1]
@@ -33,15 +36,18 @@ def test_wrapper_fit_lifecycle_success(sample_bounds):
     wrapper.tracker.stop.assert_called_once()
 
 
-def test_wrapper_fit_stops_tracker_on_exception(sample_bounds):
+@patch("green_ml_score.integrations.sklearn.GreenMLTracker")
+def test_wrapper_fit_stops_tracker_on_exception(mock_tracker_cls, sample_bounds):
     """Garante que o tracker é finalizado (try/finally) mesmo se o fit() falhar."""
     mock_base_model = MagicMock()
     mock_base_model.fit.side_effect = RuntimeError(
         "Erro simulado durante o treinamento"
     )
 
+    mock_tracker_instance = MagicMock()
+    mock_tracker_cls.return_value = mock_tracker_instance
+
     wrapper = GreenMLSklearnWrapper(model=mock_base_model, bounds=sample_bounds)
-    wrapper.tracker = MagicMock()
 
     # Act & Assert
     with pytest.raises(RuntimeError, match="Erro simulado"):
@@ -51,18 +57,21 @@ def test_wrapper_fit_stops_tracker_on_exception(sample_bounds):
     wrapper.tracker.stop.assert_called_once()
 
 
+@patch("green_ml_score.integrations.sklearn.GreenMLTracker")
 @patch("green_ml_score.integrations.sklearn.log_greenml_run")
 @patch("mlflow.active_run")
 def test_wrapper_fit_triggers_mlflow_log_when_active(
-    mock_active_run, mock_log_greenml_run, sample_bounds
+    mock_active_run, mock_log_greenml_run, mock_tracker_cls, sample_bounds
 ):
     """Garante que o log no MLflow é acionado automaticamente se houver uma run ativa."""
     # Arrange
     mock_active_run.return_value = MagicMock()  # Simula run ativa
     mock_base_model = MagicMock()
 
+    mock_tracker_instance = MagicMock()
+    mock_tracker_cls.return_value = mock_tracker_instance
+
     wrapper = GreenMLSklearnWrapper(model=mock_base_model, bounds=sample_bounds)
-    wrapper.tracker = MagicMock()
 
     # Act
     wrapper.fit([[1, 2]], [0])
@@ -71,7 +80,8 @@ def test_wrapper_fit_triggers_mlflow_log_when_active(
     mock_log_greenml_run.assert_called_once_with(wrapper.tracker, sample_bounds)
 
 
-def test_wrapper_delegation_predict_and_getattr(sample_bounds):
+@patch("green_ml_score.integrations.sklearn.GreenMLTracker")
+def test_wrapper_delegation_predict_and_getattr(mock_tracker_cls, sample_bounds):
     """Garante que o wrapper repassa transparentemente predict() e outros atributos."""
     mock_base_model = MagicMock()
     mock_base_model.predict.return_value = [1, 0]
