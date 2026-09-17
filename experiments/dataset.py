@@ -6,18 +6,18 @@ Garante carregamento imediato, suporte a modo rápido (quick_run) e pré-process
 com TF-IDF para modelos clássicos de Machine Learning.
 """
 
-from typing import Tuple, Optional
+
 import pandas as pd
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
 
 from .config import config
 
 
 def load_benchmark_dataset(
-    quick_run: bool = False, n_samples: Optional[int] = None, random_state: int = 42
-) -> Tuple[list, list, list, list]:
+    quick_run: bool = False, n_samples: int | None = None, random_state: int = 42
+) -> tuple[list, list, list, list]:
     """
     Carrega o dataset de benchmark de classificação de texto.
 
@@ -69,7 +69,7 @@ def load_benchmark_dataset(
 
 def get_tfidf_features(
     X_train: list, X_test: list, max_features: int = config.MAX_TFIDF_FEATURES
-) -> Tuple[object, object, TfidfVectorizer]:
+) -> tuple[object, object, TfidfVectorizer]:
     """
     Converte os textos brutos em matriz esparsa TF-IDF para modelos clássicos.
 

@@ -12,21 +12,25 @@ Uso:
 """
 
 import argparse
-import time
 import os
 import sys
-from typing import Dict, Any
+import time
+from typing import Any
 
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
+from sklearn.neural_network import MLPClassifier
 
 # Garante que a raiz do projeto esteja no sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import mlflow
+
+from experiments.config import config
+from experiments.dataset import get_tfidf_features, load_benchmark_dataset
+from green_ml_score.integrations.mlflow import log_greenml_run
 from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
 from green_ml_score.scoring.gms import (
     EnvironmentalMetrics,
@@ -34,10 +38,6 @@ from green_ml_score.scoring.gms import (
     Weights,
     calculate_gms,
 )
-from green_ml_score.integrations.mlflow import log_greenml_run
-
-from experiments.config import config
-from experiments.dataset import load_benchmark_dataset, get_tfidf_features
 
 
 def parse_args():
@@ -78,7 +78,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_models_dict(include_all: bool = True, random_state: int = 42) -> Dict[str, Any]:
+def get_models_dict(include_all: bool = True, random_state: int = 42) -> dict[str, Any]:
     """Retorna o dicionário de modelos instanciados para avaliação."""
     models = {
         "Logistic_Regression": LogisticRegression(

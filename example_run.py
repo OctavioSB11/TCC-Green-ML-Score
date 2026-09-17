@@ -1,7 +1,9 @@
 import time
+
 import mlflow
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+
 from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
 from green_ml_score.scoring import NormalizationBounds
 

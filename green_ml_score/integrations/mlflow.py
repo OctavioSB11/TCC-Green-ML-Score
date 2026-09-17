@@ -2,16 +2,17 @@
 Integração do GreenML Score com MLflow
 """
 
+
 import mlflow
-from typing import Optional
-from green_ml_score.scoring.gms import calculate_gms, NormalizationBounds, Weights
+
 from green_ml_score.collectors.codecarbon import GreenMLTracker
+from green_ml_score.scoring.gms import NormalizationBounds, Weights, calculate_gms
 
 
 def log_greenml_run(
     tracker: GreenMLTracker,
     bounds: NormalizationBounds,
-    weights: Optional[Weights] = None,
+    weights: Weights | None = None,
 ):
     """
     Finaliza o tracker e loga as métricas ambientais + GMS no MLflow

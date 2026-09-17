@@ -1,4 +1,5 @@
-from typing import Any, Optional
+from typing import Any
+
 from green_ml_score.collectors.codecarbon import GreenMLTracker
 from green_ml_score.integrations.mlflow import log_greenml_run
 from green_ml_score.scoring.gms import NormalizationBounds
@@ -21,7 +22,7 @@ class GreenMLSklearnWrapper:
         self,
         model: Any,
         bounds: NormalizationBounds,
-        tracker_kwargs: Optional[dict] = None,
+        tracker_kwargs: dict | None = None,
     ):
         self.model = model
         self.bounds = bounds

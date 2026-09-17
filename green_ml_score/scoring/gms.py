@@ -6,7 +6,6 @@ Autor: Projeto TCC - GreenML
 """
 
 from dataclasses import dataclass
-from typing import List
 
 # =========================
 # MODELOS DE DADOS
@@ -39,7 +38,7 @@ class NormalizationBounds:
 
     @staticmethod
     def from_metrics_list(
-        metrics_list: List[EnvironmentalMetrics],
+        metrics_list: list[EnvironmentalMetrics],
     ) -> "NormalizationBounds":
         """
         Calcula os bounds automaticamente a partir dos dados reais dos modelos.

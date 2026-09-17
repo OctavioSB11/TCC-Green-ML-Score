@@ -6,7 +6,6 @@ eficiência de uso de água (WUE) e sementes aleatórias para reprodutibilidade.
 """
 
 from dataclasses import dataclass, field
-from typing import List
 
 
 @dataclass
@@ -20,7 +19,7 @@ class ExperimentConfig:
     WUE_INDUSTRY_AVG: float = 1.8  # L/kWh (Média global de data centers)
 
     # Reprodutibilidade (Seção 5.4 do TCC)
-    SEEDS: List[int] = field(default_factory=lambda: [42, 123, 2024])
+    SEEDS: list[int] = field(default_factory=lambda: [42, 123, 2024])
 
     # Dataset e Divisão (Seção 5.2 do TCC)
     TEST_SIZE: float = 0.2

@@ -2,4 +2,4 @@
 from green_ml_score.integrations.mlflow import log_greenml_run
 from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
 
-__all__ = ["log_greenml_run", "GreenMLSklearnWrapper"]
+__all__ = ["GreenMLSklearnWrapper", "log_greenml_run"]

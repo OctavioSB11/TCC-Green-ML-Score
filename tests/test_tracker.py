@@ -8,6 +8,7 @@ Aplica o padrão CTFL / ISTQB:
 """
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 from green_ml_score.collectors.codecarbon import GreenMLTracker

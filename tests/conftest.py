@@ -9,8 +9,8 @@ Partição de Equivalência e Análise de Valor Limite):
 - Fixtures utilitárias para simulação de hardware/emissões (Mocks/Stubs).
 """
 
+
 import pytest
-from typing import List
 
 from green_ml_score.scoring.gms import (
     EnvironmentalMetrics,
@@ -54,7 +54,7 @@ def sample_metrics_worst_case() -> EnvironmentalMetrics:
 
 
 @pytest.fixture
-def sample_metrics_list() -> List[EnvironmentalMetrics]:
+def sample_metrics_list() -> list[EnvironmentalMetrics]:
     """
     Conjunto heterogêneo de modelos para teste de agregações e bounds automáticos.
     """

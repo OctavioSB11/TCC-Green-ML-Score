@@ -7,6 +7,7 @@ Aplica o padrão CTFL / ISTQB:
 """
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 from green_ml_score.integrations.mlflow import log_greenml_run

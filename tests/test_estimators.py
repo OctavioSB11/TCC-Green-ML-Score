@@ -1,7 +1,8 @@
 import pytest
+
 from green_ml_score.estimators import (
-    calculate_water_usage,
     calculate_carbon_emissions,
+    calculate_water_usage,
 )
 
 # ── Estimador de carbono: C = E × IC_região (Seção 4.2.2 do TCC) ──────────────

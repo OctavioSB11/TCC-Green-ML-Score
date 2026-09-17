@@ -12,6 +12,10 @@ As camadas collectors/integrations devem ser importadas a partir de seus
 subpacotes, pois dependem de bibliotecas pesadas (codecarbon, mlflow).
 """
 
+from green_ml_score.estimators import (
+    calculate_carbon_emissions,
+    calculate_water_usage,
+)
 from green_ml_score.scoring import (
     EnvironmentalMetrics,
     NormalizationBounds,
@@ -19,17 +23,13 @@ from green_ml_score.scoring import (
     calculate_gms,
     explain_gms,
 )
-from green_ml_score.estimators import (
-    calculate_water_usage,
-    calculate_carbon_emissions,
-)
 
 __all__ = [
     "EnvironmentalMetrics",
     "NormalizationBounds",
     "Weights",
-    "calculate_gms",
-    "explain_gms",
-    "calculate_water_usage",
     "calculate_carbon_emissions",
+    "calculate_gms",
+    "calculate_water_usage",
+    "explain_gms",
 ]

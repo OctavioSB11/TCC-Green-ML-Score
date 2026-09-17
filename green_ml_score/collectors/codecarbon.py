@@ -3,10 +3,12 @@ GreenMLTracker — rastreamento de energia e carbono via CodeCarbon.
 """
 
 import os
+
 import pandas as pd
 from codecarbon import EmissionsTracker
-from green_ml_score.estimators.water import calculate_water_usage
+
 from green_ml_score.estimators.carbon import calculate_carbon_emissions
+from green_ml_score.estimators.water import calculate_water_usage
 from green_ml_score.scoring.gms import EnvironmentalMetrics
 
 

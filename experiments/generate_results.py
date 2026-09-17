@@ -13,9 +13,10 @@ Transforma os resultados brutos dos experimentos em:
 
 import os
 import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # Configuração de estilo visual acadêmico e profissional
 plt.style.use(
