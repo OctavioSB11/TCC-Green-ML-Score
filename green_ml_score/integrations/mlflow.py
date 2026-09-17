@@ -2,7 +2,6 @@
 Integração do GreenML Score com MLflow
 """
 
-
 import mlflow
 
 from green_ml_score.collectors.codecarbon import GreenMLTracker

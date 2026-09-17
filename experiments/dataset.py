@@ -6,7 +6,6 @@ Garante carregamento imediato, suporte a modo rápido (quick_run) e pré-process
 com TF-IDF para modelos clássicos de Machine Learning.
 """
 
-
 import pandas as pd
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer

@@ -9,7 +9,6 @@ Partição de Equivalência e Análise de Valor Limite):
 - Fixtures utilitárias para simulação de hardware/emissões (Mocks/Stubs).
 """
 
-
 import pytest
 
 from green_ml_score.scoring.gms import (
