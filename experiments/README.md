@@ -6,8 +6,8 @@ Este repositório contém a infraestrutura e o protocolo experimental para avali
 
 ## Hipóteses de Trabalho (Seção 5.6 do TCC)
 
-* **H1 (Tensão Red AI vs Green AI):** Modelos complexos de alta capacidade preditiva (ex.: BERT-base / Deep Models) atingem maior acurácia, porém registram o menor **GreenML Score (GMS)** sob pesos uniformes.
-* **H2 (Fronteira de Pareto com Distillation):** Modelos otimizados/comprimidos (ex.: DistilBERT / XGBoost) posicionam-se na fronteira de Pareto entre acurácia preditiva e sustentabilidade ambiental.
+* **H1 (Tensão Red AI vs Green AI):** Modelos de maior complexidade computacional (ex.: Rede Neural MLP e XGBoost) atingem acurácia competitiva, porém registram o menor **GreenML Score (GMS)** sob pesos uniformes, devido ao custo energético elevado de treinamento iterativo.
+* **H2 (Fronteira de Pareto):** Modelos de complexidade intermediária (ex.: XGBoost) posicionam-se na fronteira de Pareto entre acurácia preditiva e sustentabilidade ambiental, representando o trade-off entre performance e eficiência energética.
 * **H3 (Eficiência Clássica):** Modelos lineares e ensembles clássicos (ex.: Regressão Logística, Random Forest) apresentam os maiores valores de **GMS**, consolidando-se como alternativas ecológicas viáveis em cenários de restrição energética.
 
 ---
