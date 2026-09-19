@@ -71,14 +71,16 @@ def test_wrapper_fit_triggers_mlflow_log_when_active(
 
     mock_tracker_instance = MagicMock()
     mock_tracker_cls.return_value = mock_tracker_instance
+    
+    mock_weights = MagicMock()
 
-    wrapper = GreenMLSklearnWrapper(model=mock_base_model, bounds=sample_bounds)
+    wrapper = GreenMLSklearnWrapper(model=mock_base_model, bounds=sample_bounds, weights=mock_weights)
 
     # Act
     wrapper.fit([[1, 2]], [0])
 
     # Assert
-    mock_log_greenml_run.assert_called_once_with(wrapper.tracker, sample_bounds)
+    mock_log_greenml_run.assert_called_once_with(wrapper.tracker, sample_bounds, mock_weights)
 
 
 @patch("green_ml_score.integrations.sklearn.GreenMLTracker")

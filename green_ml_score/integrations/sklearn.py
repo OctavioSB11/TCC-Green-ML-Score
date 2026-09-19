@@ -2,7 +2,7 @@ from typing import Any
 
 from green_ml_score.collectors.codecarbon import GreenMLTracker
 from green_ml_score.integrations.mlflow import log_greenml_run
-from green_ml_score.scoring.gms import NormalizationBounds
+from green_ml_score.scoring.gms import NormalizationBounds, Weights
 
 
 class GreenMLSklearnWrapper:
@@ -22,10 +22,12 @@ class GreenMLSklearnWrapper:
         self,
         model: Any,
         bounds: NormalizationBounds,
+        weights: Weights | None = None,
         tracker_kwargs: dict | None = None,
     ):
         self.model = model
         self.bounds = bounds
+        self.weights = weights
         self.tracker_kwargs = tracker_kwargs or {}
         self.tracker = GreenMLTracker(**self.tracker_kwargs)
 
@@ -40,7 +42,7 @@ class GreenMLSklearnWrapper:
             import mlflow
 
             if mlflow.active_run():
-                log_greenml_run(self.tracker, self.bounds)
+                log_greenml_run(self.tracker, self.bounds, self.weights)
 
         return self
 
