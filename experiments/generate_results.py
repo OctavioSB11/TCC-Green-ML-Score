@@ -57,15 +57,12 @@ FRIENDLY_NAMES = {
 }
 
 
-def load_data(results_dir="experiments/results"):
+def load_data(results_dir):
     detailed_csv = os.path.join(results_dir, "comparative_results.csv")
     summary_csv = os.path.join(results_dir, "summary_metrics.csv")
 
     if not os.path.exists(detailed_csv) or not os.path.exists(summary_csv):
-        raise FileNotFoundError(
-            f"Arquivos de resultados não encontrados em {results_dir}. "
-            "Execute 'python experiments/comparative_experiment.py' primeiro!"
-        )
+        return None, None
 
     df_detailed = pd.read_csv(detailed_csv)
     df_summary = pd.read_csv(summary_csv)
@@ -443,30 +440,40 @@ Este diretório reúne as visualizações gráficas e tabelas estatísticas gera
 
 
 def main():
-    results_dir = "experiments/results"
-    output_dir = "docs/Results"
-    os.makedirs(output_dir, exist_ok=True)
+    base_results_dir = "experiments/results"
+    base_output_dir = "docs/Results"
+    
+    if not os.path.exists(base_results_dir):
+        print("Diretório não existe.")
+        return
+
+    datasets = [d for d in os.listdir(base_results_dir) if os.path.isdir(os.path.join(base_results_dir, d))]
 
     print("=" * 70)
-    print("[*] GERANDO VISUALIZAÇÕES GRÁFICAS E TABELAS DO GREENML SCORE (SEMANA 5)")
-    print(f"Lendo dados de: {results_dir}")
-    print(f"Salvando figuras e LaTeX em: {output_dir}")
+    print("[*] GERANDO VISUALIZAÇÕES GRÁFICAS E TABELAS MULTI-DATASET")
     print("=" * 70)
 
-    df_detailed, df_summary = load_data(results_dir)
+    for dataset in datasets:
+        results_dir = os.path.join(base_results_dir, dataset)
+        output_dir = os.path.join(base_output_dir, dataset)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        print("")
+        print(f"Processando dataset: {dataset.upper()}")
+        
+        df_detailed, df_summary = load_data(results_dir)
+        if df_summary is None:
+            print(f"Resultados incompletos no dataset {dataset}, ignorando.")
+            continue
 
-    plot_gms_barchart(df_summary, output_dir)
-    plot_pareto_scatter(df_summary, output_dir)
-    plot_radar_chart(df_summary, output_dir)
-    plot_energy_time_barchart(df_summary, output_dir)
-    generate_latex_table(df_summary, output_dir)
-    generate_discussion_readme(df_summary, output_dir)
+        plot_gms_barchart(df_summary, output_dir)
+        plot_pareto_scatter(df_summary, output_dir)
+        plot_radar_chart(df_summary, output_dir)
+        plot_energy_time_barchart(df_summary, output_dir)
+        generate_latex_table(df_summary, output_dir)
+        generate_discussion_readme(df_summary, output_dir)
 
-    print(
-        "\n[OK] Todas as visualizações (PNG 300 DPI e SVG) e a tabela LaTeX foram geradas com sucesso!"
-    )
-    print(f"Confira os arquivos na pasta: {output_dir}")
-
+        print(f"[OK] Visualizações do {dataset.upper()} salvas em {output_dir}")
 
 if __name__ == "__main__":
     main()

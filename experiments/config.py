@@ -24,6 +24,11 @@ class ExperimentConfig:
     # Dataset e Divisão (Seção 5.2 do TCC)
     TEST_SIZE: float = 0.2
     MAX_TFIDF_FEATURES: int = 5000
+    
+    # Datasets disponíveis
+    AVAILABLE_DATASETS: list[str] = field(default_factory=lambda: ["newsgroups", "breast_cancer", "covtype"])
+    COVTYPE_N_SAMPLES: int = 50000  # Reduzido para ser treinável em tempo razoável
+
 
     # MLflow Experiment Name
     MLFLOW_EXPERIMENT_NAME: str = "GreenML_Comparative_Experiment"
