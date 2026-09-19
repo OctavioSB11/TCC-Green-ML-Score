@@ -195,7 +195,7 @@ print(decomposition)
 
 ## Resultados Experimentais
 
-Experimento comparativo com **4 modelos** no dataset **IMDb Reviews** (25k amostras de análise de sentimento), cada um executado com **3 sementes aleatórias** (42, 123, 2024):
+Experimento comparativo com **4 modelos** no dataset **20 Newsgroups** (classificação binária: `rec.autos` vs `sci.med`), cada um executado com **3 sementes aleatórias** (42, 123, 2024):
 
 | Ranking | Modelo | Acurácia | Tempo (s) | Energia (kWh) | GMS (0–100) |
 |:---:|---|:---:|:---:|:---:|:---:|
