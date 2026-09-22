@@ -442,12 +442,16 @@ Este diretório reúne as visualizações gráficas e tabelas estatísticas gera
 def main():
     base_results_dir = "experiments/results"
     base_output_dir = "docs/Results"
-    
+
     if not os.path.exists(base_results_dir):
         print("Diretório não existe.")
         return
 
-    datasets = [d for d in os.listdir(base_results_dir) if os.path.isdir(os.path.join(base_results_dir, d))]
+    datasets = [
+        d
+        for d in os.listdir(base_results_dir)
+        if os.path.isdir(os.path.join(base_results_dir, d))
+    ]
 
     print("=" * 70)
     print("[*] GERANDO VISUALIZAÇÕES GRÁFICAS E TABELAS MULTI-DATASET")
@@ -457,10 +461,10 @@ def main():
         results_dir = os.path.join(base_results_dir, dataset)
         output_dir = os.path.join(base_output_dir, dataset)
         os.makedirs(output_dir, exist_ok=True)
-        
+
         print("")
         print(f"Processando dataset: {dataset.upper()}")
-        
+
         df_detailed, df_summary = load_data(results_dir)
         if df_summary is None:
             print(f"Resultados incompletos no dataset {dataset}, ignorando.")
@@ -474,6 +478,7 @@ def main():
         generate_discussion_readme(df_summary, output_dir)
 
         print(f"[OK] Visualizações do {dataset.upper()} salvas em {output_dir}")
+
 
 if __name__ == "__main__":
     main()

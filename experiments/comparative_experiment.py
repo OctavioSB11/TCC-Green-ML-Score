@@ -131,7 +131,9 @@ def run_experiment():
     args = parse_args()
     seeds = args.seeds or ([42] if args.quick_run else config.SEEDS)
     include_all_models = args.models == "all"
-    datasets_to_run = config.AVAILABLE_DATASETS if args.dataset == "all" else [args.dataset]
+    datasets_to_run = (
+        config.AVAILABLE_DATASETS if args.dataset == "all" else [args.dataset]
+    )
 
     print("=" * 70)
     print("[*] INICIANDO EXPERIMENTO COMPARATIVO GREENML SCORE (TCC SEÇÃO 5)")
@@ -147,14 +149,18 @@ def run_experiment():
 
     for dataset_name in datasets_to_run:
         print(f"\n{'='*50}\n>>> PROCESSANDO DATASET: {dataset_name.upper()}\n{'='*50}")
-        
+
         # 1. Carregamento dos dados
         X_train_raw, X_test_raw, y_train, y_test, is_text = load_dataset(
             name=dataset_name, quick_run=args.quick_run, random_state=seeds[0]
         )
-        X_train_processed, X_test_processed, _ = preprocess_features(X_train_raw, X_test_raw, is_text)
+        X_train_processed, X_test_processed, _ = preprocess_features(
+            X_train_raw, X_test_raw, is_text
+        )
 
-        print(f"Dataset {dataset_name} carregado: {len(X_train_raw)} treino | {len(X_test_raw)} teste")
+        print(
+            f"Dataset {dataset_name} carregado: {len(X_train_raw)} treino | {len(X_test_raw)} teste"
+        )
 
         raw_results = []
         env_metrics_list = []
@@ -188,7 +194,9 @@ def run_experiment():
 
                 start_time = time.time()
 
-                with mlflow.start_run(run_name=f"{dataset_name}_{model_name}_seed_{seed}"):
+                with mlflow.start_run(
+                    run_name=f"{dataset_name}_{model_name}_seed_{seed}"
+                ):
                     green_model.fit(X_train_processed, y_train)
                     y_pred = green_model.predict(X_test_processed)
 
@@ -246,7 +254,9 @@ def run_experiment():
             )
             res["GMS"] = gms_100
 
-            with mlflow.start_run(run_name=f"{dataset_name}_{res['model_name']}_seed_{res['seed']}"):
+            with mlflow.start_run(
+                run_name=f"{dataset_name}_{res['model_name']}_seed_{res['seed']}"
+            ):
                 log_greenml_run(res["tracker"], global_bounds, uniform_weights)
 
             final_rows.append(
@@ -282,7 +292,9 @@ def run_experiment():
                     "Água L (Média)": round(group["Água (L)"].mean(), 6),
                     "GreenML Score (Média)": round(group["GreenML Score"].mean(), 2),
                     "GreenML Score (Std)": (
-                        round(group["GreenML Score"].std(), 2) if len(group) > 1 else 0.0
+                        round(group["GreenML Score"].std(), 2)
+                        if len(group) > 1
+                        else 0.0
                     ),
                 }
             )
@@ -306,13 +318,12 @@ def run_experiment():
         df_summary.to_csv(csv_summary, index=False)
 
         with open(md_summary, "w", encoding="utf-8") as f:
-            f.write(
-                f"# Resumo Estatístico - Dataset {dataset_name.upper()}\n\n"
-            )
+            f.write(f"# Resumo Estatístico - Dataset {dataset_name.upper()}\n\n")
             f.write(df_summary.to_markdown(index=False))
             f.write("\n")
 
     print("\nExecute 'mlflow ui' no terminal para visualizar a dashboard interativa!")
+
 
 if __name__ == "__main__":
     run_experiment()

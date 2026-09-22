@@ -1,4 +1,4 @@
-﻿"""
+"""
 dataset.py — Carregador e Pré-processador de Dataset de Benchmark (Seção 5.2 do TCC).
 
 Provedor de dados robusto e ágil para experimentos comparativos.
@@ -6,16 +6,17 @@ Suporta dados textuais (Newsgroups) e tabulares (Breast Cancer, Covtype).
 """
 
 import pandas as pd
-from sklearn.datasets import fetch_20newsgroups, load_breast_cancer, fetch_covtype
+from sklearn.datasets import fetch_20newsgroups, fetch_covtype, load_breast_cancer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 from .config import config
 
+
 def load_dataset(
     name: str = "newsgroups", quick_run: bool = False, random_state: int = 42
-) -> tuple[list|pd.DataFrame, list|pd.DataFrame, list, list, bool]:
+) -> tuple[list | pd.DataFrame, list | pd.DataFrame, list, list, bool]:
     """
     Carrega o dataset selecionado.
 
@@ -23,10 +24,12 @@ def load_dataset(
         (X_train, X_test, y_train, y_test, is_text)
     """
     if name not in config.AVAILABLE_DATASETS:
-        raise ValueError(f"Dataset {name} não suportado. Escolha entre: {config.AVAILABLE_DATASETS}")
+        raise ValueError(
+            f"Dataset {name} não suportado. Escolha entre: {config.AVAILABLE_DATASETS}"
+        )
 
     is_text = False
-    
+
     if name == "newsgroups":
         is_text = True
         try:
@@ -42,12 +45,12 @@ def load_dataset(
         except Exception:
             data_x = ["Car engine speed", "Medical clinical care"] * 500
             labels = [0, 1] * 500
-            
+
     elif name == "breast_cancer":
         dataset = load_breast_cancer()
         data_x = dataset.data
         labels = dataset.target
-        
+
     elif name == "covtype":
         # fetch_covtype pode ser grande, limitamos
         dataset = fetch_covtype()
@@ -55,7 +58,7 @@ def load_dataset(
         labels = dataset.target
         # Binarizando covtype para manter compatibilidade binária (classe 1 e 2 dominam)
         labels = (labels == 2).astype(int)
-        
+
         n_samples_limit = 500 if quick_run else config.COVTYPE_N_SAMPLES
         df = pd.DataFrame(data_x)
         df["label"] = labels
@@ -96,7 +99,9 @@ def preprocess_features(
     """
     if is_text:
         vectorizer = TfidfVectorizer(
-            max_features=config.MAX_TFIDF_FEATURES, stop_words="english", sublinear_tf=True
+            max_features=config.MAX_TFIDF_FEATURES,
+            stop_words="english",
+            sublinear_tf=True,
         )
         X_train_processed = vectorizer.fit_transform(X_train)
         X_test_processed = vectorizer.transform(X_test)
