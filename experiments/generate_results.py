@@ -447,37 +447,26 @@ def main():
         print("Diretório não existe.")
         return
 
-    datasets = [
-        d
-        for d in os.listdir(base_results_dir)
-        if os.path.isdir(os.path.join(base_results_dir, d))
-    ]
-
     print("=" * 70)
     print("[*] GERANDO VISUALIZAÇÕES GRÁFICAS E TABELAS MULTI-DATASET")
     print("=" * 70)
 
-    for dataset in datasets:
-        results_dir = os.path.join(base_results_dir, dataset)
-        output_dir = os.path.join(base_output_dir, dataset)
+    # Processa os resultados do diretório raiz se existirem
+    root_detailed = os.path.join(base_results_dir, "comparative_results.csv")
+    root_summary = os.path.join(base_results_dir, "summary_metrics.csv")
+
+    if os.path.exists(root_detailed) and os.path.exists(root_summary):
+        output_dir = os.path.join(base_output_dir, "newsgroups")
         os.makedirs(output_dir, exist_ok=True)
-
-        print("")
-        print(f"Processando dataset: {dataset.upper()}")
-
-        df_detailed, df_summary = load_data(results_dir)
-        if df_summary is None:
-            print(f"Resultados incompletos no dataset {dataset}, ignorando.")
-            continue
-
+        print("\nProcessando resultados principais do benchmark (NEWSGROUPS)...")
+        df_detailed, df_summary = load_data(base_results_dir)
         plot_gms_barchart(df_summary, output_dir)
         plot_pareto_scatter(df_summary, output_dir)
         plot_radar_chart(df_summary, output_dir)
         plot_energy_time_barchart(df_summary, output_dir)
         generate_latex_table(df_summary, output_dir)
         generate_discussion_readme(df_summary, output_dir)
-
-        print(f"[OK] Visualizações do {dataset.upper()} salvas em {output_dir}")
+        print(f"[OK] Visualizações salvas em {output_dir}")
 
 
 if __name__ == "__main__":
