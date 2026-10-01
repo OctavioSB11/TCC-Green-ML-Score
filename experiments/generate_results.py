@@ -296,16 +296,17 @@ def plot_energy_time_barchart(df_summary, output_dir):
     colors = [PALETTE.get(m, "#4c72b0") for m in models]
 
     # Subplot 1: Energia em uWh (para facilitar visualização em números legíveis)
-    energy_uwh = [e * 1e6 for e in df_summary["Energia kWh (Média)"]]
-    bars1 = ax1.bar(labels, energy_uwh, color=colors, edgecolor="black", alpha=0.88)
-    ax1.set_ylabel("Energia Consumida (μWh — micro-watt-hora)", fontweight="bold")
+    # 1 kWh = 1.000.000 mWh (a versão anterior rotulava, por engano, como micro-Wh)
+    energy_mwh = [e * 1e6 for e in df_summary["Energia kWh (Média)"]]
+    bars1 = ax1.bar(labels, energy_mwh, color=colors, edgecolor="black", alpha=0.88)
+    ax1.set_ylabel("Energia de treino por repetição (mWh)", fontweight="bold")
     ax1.set_title("Consumo de Energia por Modelo", pad=10)
     ax1.tick_params(axis="x", rotation=25)
-    for bar, val in zip(bars1, energy_uwh):
+    for bar, val in zip(bars1, energy_mwh):
         ax1.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 1.5,
-            f"{val:.1f} μWh",
+            f"{val:.2f} mWh",
             ha="center",
             va="bottom",
             fontsize=9,
@@ -367,7 +368,7 @@ def generate_latex_table(df_summary, output_dir):
 
         f1 = f"{row['F1-Score (Média)']:.4f}"
         tempo = f"{row['Tempo s (Média)']:.2f}"
-        energia = f"{row['Energia kWh (Média)']*1e6:.1f}" + r"~$\mu$Wh"
+        energia = f"{row['Energia kWh (Média)']*1e6:.2f}~mWh"
         carbono = f"{row['Carbono kg (Média)']*1e6:.1f}~mg"
 
         gms = f"\\textbf{{{row['GreenML Score (Média)']:.1f}}}"
@@ -393,80 +394,75 @@ def generate_latex_table(df_summary, output_dir):
 
 
 def generate_discussion_readme(df_summary, output_dir):
-    """Gera documentação técnica com a análise dos resultados para subsidiar o TCC."""
+    """
+    Gera um README descritivo a partir dos dados (sem conclusões pré-redigidas).
+
+    Interpretações e confirmação/refutação de hipóteses pertencem ao texto do TCC
+    e devem ser sustentadas pelos testes estatísticos (statistical_analysis.py).
+    """
     readme_path = os.path.join(output_dir, "README.md")
+    cols = {
+        "Modelo": "Modelo",
+        "N": "N",
+        "Acurácia (Média)": "Acurácia (média)",
+        "Energia mWh (Mediana)": "Energia de treino, mWh (mediana)",
+        "Energia mWh (IQR)": "Energia, mWh (IQR)",
+        "Tempo s (Média)": "Tempo de treino, s (média)",
+        "GreenML Score (Mediana)": "GMS (mediana)",
+        "GreenML Score (IQR)": "GMS (IQR)",
+    }
+    available = [c for c in cols if c in df_summary.columns]
+    table = df_summary[available].rename(columns=cols).round(4).to_markdown(index=False)
 
-    content = r"""#  Resultados Experimentais e Análise de Sustentabilidade — GreenML Score
+    content = f"""# Resultados — {output_dir}
 
-Este diretório reúne as visualizações gráficas e tabelas estatísticas geradas a partir das **12 execuções experimentais (4 modelos × 3 sementes aleatórias: 42, 123 e 2024)**, conforme protocolo metodológico definido na Seção 5 do TCC.
+Arquivos gerados automaticamente por `experiments/generate_results.py` a partir de
+`summary_metrics.csv`. Valores de energia referem-se a UMA repetição de treino.
 
----
+{table}
 
-## Visualizações Disponibilizadas (Formatos PNG 300 DPI e SVG Vetorial)
-
-1. **`gms_comparison_barchart.png / .svg`:**
-   - Ranking oficial dos modelos ordenados pelo **GreenML Score médio**, com barras de erro representando o desvio padrão ($\sigma$) entre as sementes.
-   
-2. **`pareto_tradeoff_scatter.png / .svg`:**
-   - Gráfico de dispersão cruzando **Acurácia Preditiva** (Eixo X) com **GreenML Score** (Eixo Y), evidenciando o quadrante ótimo de *Green AI* e a fronteira de Pareto.
-
-3. **`radar_multidimensional_chart.png / .svg`:**
-   - Gráfico de radar (Spider Chart) com 5 dimensões normalizadas: Acurácia, F1-Score, Eficiência Energética, Baixo Carbono e Baixa Pegada Hídrica.
-
-4. **`energy_and_time_comparison.png / .svg`:**
-   - Análise comparativa direta entre o gasto energético total em micro-watt-hora ($\mu\text{Wh}$) e o tempo computacional em segundos.
-
-5. **`summary_table.tex`:**
-   - Tabela formal formatada em LaTeX com o pacote `booktabs`, pronta para importação direta no texto do TCC.
-
----
-
-## Principais Conclusões Científicas para o TCC
-
-| Ranking | Modelo | Acurácia | Tempo (s) | Energia (kWh) | GreenML Score | Categoria |
-|:---:|---|:---:|:---:|:---:|:---:|:---:|
-| 1º | **Regressão Logística** | **0.9268** | **2.42s** | **0.000010** | **92.70 ± 2.14** | *Green AI Dominante* |
-| 2º | **Random Forest** | 0.8788 | 2.95s | 0.000023 | **82.29 ± 7.28** | *Intermediário Equilibrado* |
-| 3º | **Rede Neural (MLP)** | 0.9175 | 5.78s | 0.000042 | **68.22 ± 5.34** | *Alta Precisão / Custo Elevado* |
-| 4º | **XGBoost** | 0.8611 | 6.48s | 0.000102 | **21.83 ± 20.58** | *Red AI (Alto Overhead)* | ### Insights para a Banca:
-1. **Confirmação da Hipótese H3 (Eficiência Clássica):** A Regressão Logística provou que um modelo linear simples, bem parametrizado com TF-IDF, é capaz de atingir **92.68% de acurácia** gastando **10 vezes menos energia** que ensembles iterativos pesados, liderando com folga o GreenML Score (**92.70**).
-2. **Confirmação da Hipótese H1 (Tensão Red AI vs. Green AI):** O XGBoost e a Rede Neural MLP consumiram ordens de magnitude a mais de energia devido à complexidade computacional iterativa. No caso do XGBoost em matrizes esparsas de texto, o tempo de construção de árvores consecutivas elevou o consumo para 0.000102 kWh, resultando no menor GMS (**21.83**).
-3. **Fronteira de Pareto e Tomada de Decisão ESG:** O GreenML Score oferece uma régua objetiva para os times de MLOps identificarem que o ganho de acurácia marginal muitas vezes não justifica o custo ecológico e financeiro do modelo em produção.
+Figuras: `gms_comparison_barchart`, `pareto_tradeoff_scatter`,
+`radar_multidimensional_chart`, `energy_and_time_comparison` (PNG e SVG) e
+`summary_table.tex`. Para testes de hipótese, execute
+`experiments/statistical_analysis.py`.
 """
-
     with open(readme_path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"[OK] Documentação de resultados gerada em: {readme_path}")
 
 
-def main():
+def main() -> None:
+    """Gera figuras e tabelas para cada dataset/modo em experiments/results/<dataset>/<modo>/."""
     base_results_dir = "experiments/results"
     base_output_dir = "docs/Results"
 
-    if not os.path.exists(base_results_dir):
-        print("Diretório não existe.")
+    if not os.path.isdir(base_results_dir):
+        print("Nenhum resultado encontrado. Execute o experimento primeiro.")
         return
 
     print("=" * 70)
     print("[*] GERANDO VISUALIZAÇÕES GRÁFICAS E TABELAS MULTI-DATASET")
     print("=" * 70)
 
-    # Processa os resultados do diretório raiz se existirem
-    root_detailed = os.path.join(base_results_dir, "comparative_results.csv")
-    root_summary = os.path.join(base_results_dir, "summary_metrics.csv")
-
-    if os.path.exists(root_detailed) and os.path.exists(root_summary):
-        output_dir = os.path.join(base_output_dir, "newsgroups")
-        os.makedirs(output_dir, exist_ok=True)
-        print("\nProcessando resultados principais do benchmark (NEWSGROUPS)...")
-        df_detailed, df_summary = load_data(base_results_dir)
-        plot_gms_barchart(df_summary, output_dir)
-        plot_pareto_scatter(df_summary, output_dir)
-        plot_radar_chart(df_summary, output_dir)
-        plot_energy_time_barchart(df_summary, output_dir)
-        generate_latex_table(df_summary, output_dir)
-        generate_discussion_readme(df_summary, output_dir)
-        print(f"[OK] Visualizações salvas em {output_dir}")
+    for dataset in sorted(os.listdir(base_results_dir)):
+        dataset_dir = os.path.join(base_results_dir, dataset)
+        if not os.path.isdir(dataset_dir):
+            continue
+        for mode in sorted(os.listdir(dataset_dir)):
+            results_dir = os.path.join(dataset_dir, mode)
+            if not os.path.exists(os.path.join(results_dir, "summary_metrics.csv")):
+                continue
+            output_dir = os.path.join(base_output_dir, dataset, mode)
+            os.makedirs(output_dir, exist_ok=True)
+            print(f"\nProcessando {dataset} ({mode})...")
+            _, df_summary = load_data(results_dir)
+            plot_gms_barchart(df_summary, output_dir)
+            plot_pareto_scatter(df_summary, output_dir)
+            plot_radar_chart(df_summary, output_dir)
+            plot_energy_time_barchart(df_summary, output_dir)
+            generate_latex_table(df_summary, output_dir)
+            generate_discussion_readme(df_summary, output_dir)
+            print(f"[OK] Visualizações salvas em {output_dir}")
 
 
 if __name__ == "__main__":
