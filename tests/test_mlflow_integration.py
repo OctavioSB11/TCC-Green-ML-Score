@@ -71,3 +71,21 @@ def test_log_greenml_run_default_weights_fallback(mock_mlflow, sample_bounds):
     # Para consumo 0, GMS na escala 100 deve ser 100.0
     assert gms_result == 100.0
     mock_mlflow.log_metric.assert_any_call("GreenML_Score", 100.0)
+
+
+@patch("green_ml_score.integrations.mlflow.mlflow")
+def test_log_greenml_run_without_bounds_logs_only_absolute_metrics(mock_mlflow):
+    """Sem limites de normalização, nenhum GMS arbitrário deve ser registrado."""
+    mock_tracker = MagicMock()
+    mock_tracker.get_metrics.return_value = EnvironmentalMetrics(
+        energy=0.002, carbon=0.0002, water=0.001
+    )
+    mock_tracker.carbon_intensity = 120.0
+    mock_tracker.wue = 0.52
+
+    result = log_greenml_run(tracker=mock_tracker)
+
+    assert result is None
+    logged = [call.args[0] for call in mock_mlflow.log_metric.call_args_list]
+    assert "GreenML_Score" not in logged
+    assert "greenml_energy_kwh" in logged
