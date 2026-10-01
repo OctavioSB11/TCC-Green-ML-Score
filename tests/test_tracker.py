@@ -4,14 +4,15 @@ test_tracker.py — Testes unitários para o módulo GreenMLTracker (CodeCarbon 
 Aplica o padrão CTFL / ISTQB:
 - Testes isolados de hardware utilizando Mocks/Stubs para EmissionsTracker.
 - Partição de equivalência para cálculo de carbono (regional explícito vs. derivado do CodeCarbon).
-- Teste de robustez e tratamento de exceção (resiliência caso emissions.csv não exista).
+- Falhas de leitura geram MeasurementError (nunca consumo zero silencioso).
 """
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from green_ml_score.collectors.codecarbon import GreenMLTracker
+from green_ml_score.collectors.codecarbon import GreenMLTracker, MeasurementError
 from green_ml_score.scoring.gms import EnvironmentalMetrics
 
 
@@ -67,15 +68,43 @@ def test_tracker_read_energy_from_csv_success(
 
 
 @patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
-def test_tracker_read_energy_missing_csv_safe_fallback(
-    mock_emissions_tracker_cls, tmp_path
-):
-    """Testa a resiliência do tracker quando o arquivo emissions.csv não existe (retorna 0.0)."""
+def test_tracker_read_energy_missing_csv_raises(mock_emissions_tracker_cls, tmp_path):
+    """Falha de leitura NÃO pode virar consumo zero (o que produziria GMS = 100)."""
     tracker = GreenMLTracker(output_dir=str(tmp_path))
 
-    energy = tracker._read_energy_from_csv()
+    with pytest.raises(MeasurementError):
+        tracker._read_energy_from_csv()
 
-    assert energy == 0.0
+
+@patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
+def test_tracker_prefers_in_memory_measurement(mock_emissions_tracker_cls):
+    """A energia e a procedência vêm de final_emissions_data, sem depender do CSV."""
+    mock_instance = MagicMock()
+    mock_instance.stop.return_value = 0.0001
+    mock_instance.final_emissions_data = SimpleNamespace(
+        energy_consumed=0.004,
+        duration=12.5,
+        cpu_energy=0.001,
+        ram_energy=0.003,
+        gpu_energy=0.0,
+        cpu_power=15.0,
+        ram_power=20.0,
+        tracking_mode="machine",
+        os="Windows-11",
+        cpu_model="Intel i5-1235U",
+        codecarbon_version="3.2.6",
+    )
+    mock_emissions_tracker_cls.return_value = mock_instance
+
+    tracker = GreenMLTracker(output_dir=".")
+    tracker._read_energy_from_csv = MagicMock()
+    tracker.stop()
+
+    tracker._read_energy_from_csv.assert_not_called()
+    assert tracker.energy_kwh == pytest.approx(0.004)
+    assert tracker.details.tracking_mode == "machine"
+    assert tracker.details.ram_power_w == 20.0
+    assert tracker.details.ram_share == pytest.approx(0.75)
 
 
 @patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
