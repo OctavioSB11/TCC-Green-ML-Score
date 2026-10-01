@@ -1,58 +1,53 @@
 # Experimento Comparativo — GreenML Score (Seção 5 do TCC)
 
-Este repositório contém a infraestrutura e o protocolo experimental para avaliação empírica do **GreenML Score (GMS)** comparando modelos de Machine Learning clássicos (*Green AI*) e redes profundas (*Red AI*).
+## Protocolo de medição (revisão semana 1)
 
----
+Para cada combinação (dataset, semente, modelo):
 
-## Hipóteses de Trabalho (Seção 5.6 do TCC)
+1. A semente define a divisão treino/teste (estratificada, 80/20) e a inicialização
+   do modelo. O pré-processamento (TF-IDF ou StandardScaler) é ajustado só no treino
+   e fica **fora** da janela de medição.
+2. **Treino** e **inferência** são medidos em janelas separadas do CodeCarbon. Cada
+   fase é repetida `WORKLOAD_REPETITIONS` vezes com clones idênticos do estimador,
+   e os valores são reportados **por repetição**.
+3. Todos os modelos usam o mesmo paralelismo (`N_JOBS`), inclusive BLAS/OpenMP.
+4. A ordem dos modelos é sorteada a cada semente.
+5. O GMS é calculado ao final, por dataset, sobre a energia de treino por repetição.
 
-* **H1 (Tensão Red AI vs Green AI):** Modelos de maior complexidade computacional (ex.: Rede Neural MLP e XGBoost) atingem acurácia competitiva, porém registram o menor **GreenML Score (GMS)** sob pesos uniformes, devido ao custo energético elevado de treinamento iterativo.
-* **H2 (Fronteira de Pareto):** Modelos de complexidade intermediária (ex.: XGBoost) posicionam-se na fronteira de Pareto entre acurácia preditiva e sustentabilidade ambiental, representando o trade-off entre performance e eficiência energética.
-* **H3 (Eficiência Clássica):** Modelos lineares e ensembles clássicos (ex.: Regressão Logística, Random Forest) apresentam os maiores valores de **GMS**, consolidando-se como alternativas ecológicas viáveis em cenários de restrição energética.
+Pendente (semana 2): execução de aquecimento descartada, baseline de potência em
+repouso, módulo de contextos de execução e score relativo a um modelo de referência.
 
----
-
-## Protocolo Experimental (Seção 5.4 do TCC)
-
-| Parâmetro | Valor Padrão | Descrição |
-|---|---|---|
-| **Intensidade de Carbono (IC)** | `120.0 gCO2e/kWh` | Matriz regional de São Paulo (IEA 2024) |
-| **Fator Hídrico (WUE)** | `0.52 L/kWh` | Eficiência de uso de água em Data Centers (Google 2024) |
-| **Sementes Aleatórias (Seeds)** | `[42, 123, 2024]` | Múltiplas execuções para média e desvio padrão |
-| **Normalização** | `Global Bounds` | `NormalizationBounds.from_metrics_list()` sobre todos os modelos |
-| **Pesos Padrão** | `w_E = w_C = w_W = 1/3` | Distribuição uniforme neutra | ---
-
-## Como Executar
-
-### 1. Teste Rápido (Quick Run)
-Executa em poucos segundos usando um subset do dataset de benchmark para validação ágil da pipeline:
+## Como executar
 
 ```bash
-python experiments/comparative_experiment.py --quick-run
+pip install -e .[experiments]
+
+# Validação rápida (500 amostras, 1 semente, 1 repetição)
+python experiments/comparative_experiment.py --quick-run --dataset breast_cancer
+
+# Execução completa de um dataset (10 sementes, 10 repetições)
+python experiments/comparative_experiment.py --dataset newsgroups
+
+# Análise estatística, figuras e tabelas
+python experiments/statistical_analysis.py experiments/results/newsgroups/full
+python experiments/generate_results.py
 ```
 
-### 2. Execução com Modelos Clássicos
-Avalia modelos Scikit-Learn (Regressão Logística e Random Forest) nas sementes padrão:
+**Execuções completas que serão usadas no TCC** devem ser feitas com a máquina
+dedicada: notebook na tomada, mesmo plano de energia do Windows, sem IDE, navegador
+ou agentes de programação abertos. Qualquer processo concorrente entra na medição.
 
-```bash
-python experiments/comparative_experiment.py --models sklearn
+## Saídas
+
+```
+experiments/results/<dataset>/<full|quick_run>/
+├── comparative_results.csv   # uma linha por (semente, modelo), precisão total
+├── summary_metrics.csv       # resumo por modelo (média, desvio, mediana, IQR)
+├── summary_table.md
+├── run_metadata.json         # commit, plataforma, configuração, horários
+├── stats_report.md           # gerado por statistical_analysis.py
+└── codecarbon/emissions.csv  # log bruto do CodeCarbon (versionado como evidência)
 ```
 
-### 3. Execução Completa (All Models)
-Avalia todas as famílias de modelos (incluindo XGBoost):
-
-```bash
-python experiments/comparative_experiment.py --models all --seeds 42 123 2024
-```
-
----
-
-## Visualização no MLflow
-
-Após a execução, inicie a interface do MLflow para visualizar a dashboard comparativa e gráficos nativos:
-
-```bash
-mlflow ui
-```
-
-Abra o navegador em `http://127.0.0.1:5000` para visualizar os experimentos e métricas registradas.
+Resultados anteriores à revisão estão em `experiments/results/_legacy_v0.1/` e não
+devem ser usados no texto final.
