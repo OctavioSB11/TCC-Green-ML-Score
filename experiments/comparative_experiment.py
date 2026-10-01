@@ -1,376 +1,366 @@
 """
-comparative_experiment.py — Script Principal de Execução do Experimento Comparativo (Seção 5 do TCC).
+comparative_experiment.py — Experimento comparativo do GreenML Score (Seção 5 do TCC).
 
-Treina e compara múltiplos modelos de Machine Learning (Green AI vs. Red AI),
-capturando consumo energético (kWh), emissões de carbono (kg CO2e), pegada hídrica (L)
-e calculando o GreenML Score (GMS) normalizado.
+Protocolo por (dataset, semente, modelo):
+  1. Divisão treino/teste e pré-processamento dependentes da semente (fora da medição).
+  2. Fase de TREINO medida: N ajustes de clones idênticos do estimador.
+  3. Fase de INFERÊNCIA medida: N predições sobre o conjunto de teste.
+  4. Energia, tempo de parede e tempo de CPU reportados POR REPETIÇÃO.
+O GMS é calculado ao final, por dataset, sobre a energia de treino por repetição.
+
+Todos os modelos usam o mesmo grau de paralelismo (config.N_JOBS), inclusive nas
+bibliotecas numéricas (BLAS/OpenMP), e a ordem dos modelos é sorteada a cada
+semente para não acumular efeitos sistemáticos de ordem de execução.
 
 Uso:
-    python experiments/comparative_experiment.py --quick-run
-    python experiments/comparative_experiment.py --models sklearn
-    python experiments/comparative_experiment.py --models all --seeds 42 123 2024
+    python experiments/comparative_experiment.py --quick-run --dataset breast_cancer
+    python experiments/comparative_experiment.py --dataset newsgroups
+    python experiments/comparative_experiment.py --dataset all --seeds 42 123 2024
 """
 
+from __future__ import annotations
+
 import argparse
+import json
 import os
+import platform
+import subprocess
 import sys
 import time
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
+from sklearn.base import clone
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.neural_network import MLPClassifier
+from threadpoolctl import threadpool_limits
 
-# Garante que a raiz do projeto esteja no sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import mlflow
-
-from experiments.config import config
-from experiments.dataset import load_dataset, preprocess_features
-from green_ml_score.integrations.mlflow import log_greenml_run
-from green_ml_score.integrations.sklearn import GreenMLSklearnWrapper
-from green_ml_score.scoring.gms import (
+from experiments.config import config  # noqa: E402
+from experiments.dataset import (  # noqa: E402
+    RawDataset,
+    load_raw_dataset,
+    preprocess_features,
+    split_dataset,
+)
+from green_ml_score.collectors.codecarbon import GreenMLTracker  # noqa: E402
+from green_ml_score.scoring.gms import (  # noqa: E402
     EnvironmentalMetrics,
     NormalizationBounds,
     Weights,
     calculate_gms,
 )
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Executa o experimento comparativo do GreenML Score (TCC Seção 5)."
-    )
-    parser.add_argument(
-        "--quick-run",
-        action="store_true",
-        help="Executa em modo rápido (subset reduzido e 1 seed) para testes agéis.",
-    )
-    parser.add_argument(
-        "--models",
-        type=str,
-        default="all",
-        choices=["sklearn", "all"],
-        help="Família de modelos a executar: 'sklearn' (rápido/clássico) ou 'all' (completo com XGBoost e MLP).",
-    )
-    parser.add_argument(
-        "--seeds",
-        nargs="+",
-        type=int,
-        default=None,
-        help="Sementes aleatórias para execução (ex: 42 123 2024).",
-    )
-    parser.add_argument(
-        "--dataset",
-        type=str,
-        default="all",
-        choices=["all", "newsgroups", "breast_cancer", "covtype"],
-        help="Dataset a ser utilizado. Padrão: 'all' (executa todos).",
-    )
-    parser.add_argument(
-        "--carbon-intensity",
-        type=float,
-        default=config.CARBON_INTENSITY_SAO_PAULO,
-        help="Intensidade de carbono regional (gCO2e/kWh). Padrão: 120.0 (São Paulo).",
-    )
-    parser.add_argument(
-        "--wue",
-        type=float,
-        default=config.WUE_GOOGLE_2024,
-        help="WUE do ambiente em L/kWh. Padrão: 0.52 (Google 2024).",
-    )
-    return parser.parse_args()
+KWH_TO_J: float = 3.6e6
+KWH_TO_MWH: float = 1e6  # 1 kWh = 1.000.000 mWh
 
 
-def get_models_dict(include_all: bool = True, random_state: int = 42) -> dict[str, Any]:
-    """Retorna o dicionário de modelos instanciados para avaliação."""
-    models = {
-        "Logistic_Regression": LogisticRegression(
-            max_iter=1000, random_state=random_state
-        ),
+# ---------------------------------------------------------------------------
+# Modelos
+# ---------------------------------------------------------------------------
+
+
+def get_models(include_all: bool, random_state: int, n_jobs: int) -> dict[str, Any]:
+    """Estimadores avaliados, todos com o mesmo grau de paralelismo."""
+    models: dict[str, Any] = {
+        "Logistic_Regression": LogisticRegression(max_iter=1000, random_state=random_state),
         "Random_Forest": RandomForestClassifier(
-            n_estimators=100, random_state=random_state, n_jobs=-1
+            n_estimators=100, random_state=random_state, n_jobs=n_jobs
         ),
     }
-
     if include_all:
         try:
             from xgboost import XGBClassifier
-
-            models["XGBoost"] = XGBClassifier(
-                n_estimators=100,
-                random_state=random_state,
-                n_jobs=-1,
-                eval_metric="logloss",
-            )
-        except ImportError:
-            print("[AVISO] XGBoost não encontrado. Instale com: pip install xgboost")
-
-        # Adiciona modelo de Rede Neural (MLPClassifier) representando aproximação com Redes Profundas
-        models["MLP_Neural_Network"] = MLPClassifier(
-            hidden_layer_sizes=(64, 32),
-            max_iter=200,
-            random_state=random_state,
-            early_stopping=True,
+        except ImportError as exc:
+            raise ImportError("XGBoost é obrigatório com --models all: pip install xgboost") from exc
+        models["XGBoost"] = XGBClassifier(
+            n_estimators=100, random_state=random_state, n_jobs=n_jobs, eval_metric="logloss"
         )
-
+        models["MLP_Neural_Network"] = MLPClassifier(
+            hidden_layer_sizes=(64, 32), max_iter=200, random_state=random_state, early_stopping=True
+        )
     return models
 
 
-if hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+# ---------------------------------------------------------------------------
+# Medição
+# ---------------------------------------------------------------------------
 
 
-def run_experiment():
-    args = parse_args()
-    seeds = args.seeds or ([42] if args.quick_run else config.SEEDS)
-    include_all_models = args.models == "all"
-    datasets_to_run = (
-        config.AVAILABLE_DATASETS if args.dataset == "all" else [args.dataset]
+@dataclass(frozen=True)
+class PhaseMeasurement:
+    """Resultado de uma fase medida, normalizado por repetição."""
+
+    energy_kwh: float
+    wall_time_s: float
+    cpu_time_s: float
+    tracking_mode: str | None
+    ram_share: float | None
+    cpu_power_w: float | None
+    ram_power_w: float | None
+
+
+def measure_phase(
+    action: Callable[[], Any], repetitions: int, tracker_kwargs: dict[str, Any]
+) -> tuple[PhaseMeasurement, Any]:
+    """Executa ``action`` N vezes sob medição e devolve valores por repetição."""
+    tracker = GreenMLTracker(**tracker_kwargs)
+    result: Any = None
+    with threadpool_limits(limits=config.N_JOBS):
+        tracker.start()
+        try:
+            # Cronômetros internos à medição: excluem o overhead de start/stop do tracker
+            wall_start, cpu_start = time.perf_counter(), time.process_time()
+            for _ in range(repetitions):
+                result = action()
+            wall, cpu = time.perf_counter() - wall_start, time.process_time() - cpu_start
+        finally:
+            tracker.stop()
+
+    d = tracker.details
+    return (
+        PhaseMeasurement(
+            energy_kwh=tracker.energy_kwh / repetitions,
+            wall_time_s=wall / repetitions,
+            cpu_time_s=cpu / repetitions,
+            tracking_mode=d.tracking_mode,
+            ram_share=d.ram_share,
+            cpu_power_w=d.cpu_power_w,
+            ram_power_w=d.ram_power_w,
+        ),
+        result,
     )
 
-    # N repetições de fit/predict por seed para aumentar a carga e a precisão da medição
-    workload_loops = 1 if args.quick_run else 10
 
-    # Perfis Regionais para demonstrar independência das dimensões da métrica
-    regional_scenarios = {
-        "Brasil_SP": {
-            "carbon_intensity": config.CARBON_INTENSITY_SAO_PAULO, # 120.0 gCO2e/kWh
-            "wue": config.WUE_GOOGLE_2024,                        # 0.52 L/kWh
-        },
-        "EUA_East": {
-            "carbon_intensity": config.CARBON_INTENSITY_US_GRID,   # 380.0 gCO2e/kWh
-            "wue": 1.1,                                           # 1.1 L/kWh (Azure / US avg)
-        },
-        "Alemanha": {
-            "carbon_intensity": 480.0,                             # 480.0 gCO2e/kWh (Alta dependência de carvão/gás)
-            "wue": config.WUE_INDUSTRY_AVG,                       # 1.8 L/kWh (Resfriamento tradicional)
-        }
+def run_single(
+    model_name: str,
+    estimator: Any,
+    data: tuple[Any, Any, np.ndarray, np.ndarray],
+    repetitions: int,
+    tracker_kwargs: dict[str, Any],
+) -> dict[str, Any]:
+    """Mede treino e inferência de um estimador e devolve uma linha de resultados."""
+    X_train, X_test, y_train, y_test = data
+
+    def train_once() -> Any:
+        return clone(estimator).fit(X_train, y_train)
+
+    train, fitted = measure_phase(train_once, repetitions, tracker_kwargs)
+    infer, y_pred = measure_phase(lambda: fitted.predict(X_test), repetitions, tracker_kwargs)
+
+    carbon_kg = train.energy_kwh * tracker_kwargs["carbon_intensity_g_per_kwh"] / 1000.0
+    water_l = train.energy_kwh * tracker_kwargs["wue_liters_per_kwh"]
+    n_test = X_test.shape[0]
+
+    return {
+        "model_name": model_name,
+        "accuracy": accuracy_score(y_test, y_pred),
+        "f1_macro": f1_score(y_test, y_pred, average="macro"),
+        "n_train": X_train.shape[0],
+        "n_test": n_test,
+        "repetitions": repetitions,
+        # Treino (por repetição) — base do GMS
+        "energy_kwh": train.energy_kwh,
+        "energy_j": train.energy_kwh * KWH_TO_J,
+        "carbon_kg": carbon_kg,
+        "water_liters": water_l,
+        "train_wall_time_s": train.wall_time_s,
+        "train_cpu_time_s": train.cpu_time_s,
+        # Inferência (por repetição)
+        "infer_energy_kwh": infer.energy_kwh,
+        "infer_energy_j_per_1k": infer.energy_kwh * KWH_TO_J / n_test * 1000,
+        "infer_wall_time_s": infer.wall_time_s,
+        "infer_cpu_time_s": infer.cpu_time_s,
+        # Procedência da medição
+        "tracking_mode": train.tracking_mode,
+        "ram_energy_share": train.ram_share,
+        "cpu_power_w": train.cpu_power_w,
+        "ram_power_w": train.ram_power_w,
     }
 
-    print("=" * 70)
-    print("[*] INICIANDO EXPERIMENTO COMPARATIVO GREENML SCORE (REVISED & ROBUST)")
-    print(f"Modo: {'QUICK RUN (Rápido)' if args.quick_run else 'COMPLETO (Workload Loop N=' + str(workload_loops) + ')'}")
-    print(f"Cenários Regionais: {list(regional_scenarios.keys())}")
-    print(f"Seeds: {seeds}")
-    print(f"Datasets: {datasets_to_run}")
-    print("=" * 70)
 
-    # Configuração do MLflow
-    mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
+# ---------------------------------------------------------------------------
+# Agregação e persistência
+# ---------------------------------------------------------------------------
 
-    for dataset_name in datasets_to_run:
-        print(f"\n{'='*50}\n>>> PROCESSANDO DATASET: {dataset_name.upper()}\n{'='*50}")
 
-        # 1. Carregamento dos dados
-        X_train_raw, X_test_raw, y_train, y_test, is_text = load_dataset(
-            name=dataset_name, quick_run=args.quick_run, random_state=seeds[0]
+def add_gms(df: pd.DataFrame) -> pd.DataFrame:
+    """GMS (0–100) sobre a energia de treino, com limites definidos no próprio conjunto."""
+    metrics = [
+        EnvironmentalMetrics(r.energy_kwh, r.carbon_kg, r.water_liters)
+        for r in df.itertuples()
+    ]
+    bounds = NormalizationBounds.from_metrics_list(metrics)
+    out = df.copy()
+    out["gms"] = [calculate_gms(m, bounds, Weights(), scale_100=True) for m in metrics]
+    return out
+
+
+def _iqr(s: pd.Series) -> float:
+    return float(s.quantile(0.75) - s.quantile(0.25))
+
+
+def summarize(df: pd.DataFrame) -> pd.DataFrame:
+    """Resumo por modelo para apresentação (energia em mWh; médias, desvios, medianas e IQR)."""
+    rows = []
+    for model, g in df.groupby("model_name"):
+        rows.append(
+            {
+                "Modelo": model,
+                "N": len(g),
+                "Acurácia (Média)": g["accuracy"].mean(),
+                "Acurácia (Std)": g["accuracy"].std(ddof=1),
+                "F1-Score (Média)": g["f1_macro"].mean(),
+                "Tempo s (Média)": g["train_wall_time_s"].mean(),
+                "Tempo CPU s (Média)": g["train_cpu_time_s"].mean(),
+                "Energia kWh (Média)": g["energy_kwh"].mean(),
+                "Energia mWh (Média)": g["energy_kwh"].mean() * KWH_TO_MWH,
+                "Energia mWh (Mediana)": g["energy_kwh"].median() * KWH_TO_MWH,
+                "Energia mWh (IQR)": _iqr(g["energy_kwh"]) * KWH_TO_MWH,
+                "Inferência J/1k amostras (Média)": g["infer_energy_j_per_1k"].mean(),
+                "Carbono kg (Média)": g["carbon_kg"].mean(),
+                "Água L (Média)": g["water_liters"].mean(),
+                "GreenML Score (Média)": g["gms"].mean(),
+                "GreenML Score (Std)": g["gms"].std(ddof=1),
+                "GreenML Score (Mediana)": g["gms"].median(),
+                "GreenML Score (IQR)": _iqr(g["gms"]),
+            }
         )
-        X_train_processed, X_test_processed, _ = preprocess_features(
-            X_train_raw, X_test_raw, is_text
+    return pd.DataFrame(rows).sort_values("GreenML Score (Média)", ascending=False)
+
+
+def _git_commit() -> str | None:
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
         )
+        return out.stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
 
-        print(
-            f"Dataset {dataset_name} carregado: {len(X_train_raw)} treino | {len(X_test_raw)} teste"
-        )
 
-        raw_results = []
-        env_metrics_list = []
+def write_outputs(
+    out_dir: Path, df: pd.DataFrame, summary: pd.DataFrame, meta: dict[str, Any]
+) -> None:
+    """Grava resultados brutos SEM arredondamento, o resumo e os metadados da execução."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_dir / "comparative_results.csv", index=False)
+    summary.to_csv(out_dir / "summary_metrics.csv", index=False)
+    with open(out_dir / "summary_table.md", "w", encoding="utf-8") as f:
+        f.write(f"# Resumo — {meta['dataset']} ({meta['mode']})\n\n")
+        f.write(summary.round(4).to_markdown(index=False))
+        f.write("\n")
+    with open(out_dir / "run_metadata.json", "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2, ensure_ascii=False)
 
-        sample_models = get_models_dict(
-            include_all=include_all_models, random_state=seeds[0]
-        )
 
-        for model_name in sample_models.keys():
-            for seed in seeds:
-                print(f"\n Treinando {model_name} (Seed: {seed}, Workload Loops: {workload_loops}) no {dataset_name}...")
+# ---------------------------------------------------------------------------
+# Orquestração
+# ---------------------------------------------------------------------------
 
-                model_instances = get_models_dict(
-                    include_all=include_all_models, random_state=seed
-                )
-                base_model = model_instances[model_name]
 
-                # Usaremos o cenário de SP como baseline para coleta primária de energia
-                base_env = regional_scenarios["Brasil_SP"]
-                temp_bounds = NormalizationBounds(
-                    energy_max=1.0, carbon_max=1.0, water_max=1.0
-                )
-                tracker_kwargs = {
-                    "carbon_intensity_g_per_kwh": base_env["carbon_intensity"],
-                    "wue_liters_per_kwh": base_env["wue"],
-                    "log_level": "error",
-                }
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Experimento comparativo do GreenML Score.")
+    parser.add_argument("--quick-run", action="store_true",
+                        help="Subconjunto reduzido, 1 semente e 1 repetição (validação).")
+    parser.add_argument("--models", default="all", choices=["sklearn", "all"])
+    parser.add_argument("--seeds", nargs="+", type=int, default=None)
+    parser.add_argument("--dataset", default="all",
+                        choices=["all", *config.AVAILABLE_DATASETS])
+    parser.add_argument("--carbon-intensity", type=float,
+                        default=config.CARBON_INTENSITY_SAO_PAULO, help="gCO2e/kWh")
+    parser.add_argument("--wue", type=float, default=config.WUE_GOOGLE_2024, help="L/kWh")
+    parser.add_argument("--no-mlflow", action="store_true", help="Não registra no MLflow.")
+    return parser.parse_args()
 
-                green_model = GreenMLSklearnWrapper(
-                    model=base_model, bounds=temp_bounds, tracker_kwargs=tracker_kwargs
-                )
 
-                start_time = time.time()
+def log_to_mlflow(row: dict[str, Any], dataset: str, seed: int) -> None:
+    import mlflow
 
-                with mlflow.start_run(
-                    run_name=f"{dataset_name}_{model_name}_seed_{seed}"
-                ):
-                    green_model.tracker.start()
-                    try:
-                        # Executa o loop de carga de trabalho para acumular tempo e energia mensuráveis
-                        for loop_idx in range(workload_loops):
-                            # Reinicia o modelo a cada iteração do loop se necessário ou ajusta parcial
-                            if loop_idx > 0:
-                                model_instances_loop = get_models_dict(
-                                    include_all=include_all_models, random_state=seed + loop_idx
-                                )
-                                base_model_loop = model_instances_loop[model_name]
-                                base_model_loop.fit(X_train_processed, y_train)
-                                y_pred = base_model_loop.predict(X_test_processed)
-                            else:
-                                green_model.model.fit(X_train_processed, y_train)
-                                y_pred = green_model.model.predict(X_test_processed)
-                    finally:
-                        green_model.tracker.stop()
+    with mlflow.start_run(run_name=f"{dataset}_{row['model_name']}_seed_{seed}"):
+        mlflow.log_params({"dataset": dataset, "seed": seed, "model_name": row["model_name"],
+                           "repetitions": row["repetitions"], "n_jobs": config.N_JOBS,
+                           "tracking_mode": row["tracking_mode"]})
+        mlflow.log_metrics({k: v for k, v in row.items()
+                            if isinstance(v, (int, float)) and v == v
+                            and k not in {"seed", "repetitions"}})
 
-                    elapsed_time = time.time() - start_time
-                    acc = accuracy_score(y_test, y_pred)
-                    f1 = f1_score(y_test, y_pred, average="macro")
 
-                    metrics: EnvironmentalMetrics = green_model.tracker.get_metrics()
-                    env_metrics_list.append(metrics)
+def run_dataset(
+    raw: RawDataset, seeds: list[int], include_all: bool, repetitions: int,
+    tracker_kwargs: dict[str, Any], use_mlflow: bool,
+) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    for seed in seeds:
+        X_tr_raw, X_te_raw, y_tr, y_te = split_dataset(raw, seed)
+        X_tr, X_te, _ = preprocess_features(X_tr_raw, X_te_raw, raw.is_text)
+        models = get_models(include_all, random_state=seed, n_jobs=config.N_JOBS)
+        order = np.random.default_rng(seed).permutation(list(models))
 
-                    mlflow.log_metric("accuracy", acc)
-                    mlflow.log_metric("f1_macro", f1)
-                    mlflow.log_metric("train_time_seconds", elapsed_time)
-                    mlflow.log_param("model_name", model_name)
-                    mlflow.log_param("dataset", dataset_name)
-                    mlflow.log_param("seed", seed)
+        for model_name in order:
+            print(f"  seed={seed:<5} {model_name:<20}", end=" ", flush=True)
+            row = run_single(str(model_name), models[model_name],
+                             (X_tr, X_te, y_tr, y_te), repetitions, tracker_kwargs)
+            row.update({"dataset": raw.name, "seed": seed})
+            rows.append(row)
+            print(f"acc={row['accuracy']:.4f}  E_treino={row['energy_j']:.2f} J  "
+                  f"t={row['train_wall_time_s']:.2f} s")
+            if use_mlflow:
+                log_to_mlflow(row, raw.name, seed)
+    return pd.DataFrame(rows)
 
-                    raw_results.append(
-                        {
-                            "model_name": model_name,
-                            "seed": seed,
-                            "accuracy": acc,
-                            "f1_macro": f1,
-                            "train_time_s": elapsed_time,
-                            "energy_kwh": metrics.energy,
-                            "carbon_kg": metrics.carbon,
-                            "water_liters": metrics.water,
-                            "metrics_obj": metrics,
-                            "tracker": green_model.tracker,
-                        }
-                    )
 
-                    print(
-                        f"   [OK] Acurácia: {acc:.4f} | F1-Score: {f1:.4f} | Tempo: {elapsed_time:.2f}s | Energia: {metrics.energy:.6f} kWh"
-                    )
+def main() -> None:
+    args = parse_args()
+    seeds = args.seeds or ([config.SEEDS[0]] if args.quick_run else config.SEEDS)
+    repetitions = config.QUICK_RUN_REPETITIONS if args.quick_run else config.WORKLOAD_REPETITIONS
+    datasets = config.AVAILABLE_DATASETS if args.dataset == "all" else [args.dataset]
+    mode = "quick_run" if args.quick_run else "full"
 
-        # 4. Normalização Global Relativa e Cenas Regionais do GMS
-        global_bounds = NormalizationBounds.from_metrics_list(env_metrics_list)
-        uniform_weights = Weights()
+    if not args.no_mlflow:
+        import mlflow
+        mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
-        print("\n" + "-" * 50)
-        print(f"[*] RECALCULANDO GMS GLOBAL PARA {dataset_name.upper()}")
-        print(
-            f"Limites Max: Energia={global_bounds.energy_max:.6f}kWh | Carbono={global_bounds.carbon_max:.6f}kg | Água={global_bounds.water_max:.6f}L"
-        )
-        print("-" * 50)
+    for name in datasets:
+        print(f"\n=== {name.upper()} | modo={mode} | seeds={seeds} | repetições={repetitions}")
+        raw = load_raw_dataset(name, quick_run=args.quick_run)
+        out_dir = Path(config.RESULTS_DIR) / name / mode
+        tracker_kwargs = {
+            "carbon_intensity_g_per_kwh": args.carbon_intensity,
+            "wue_liters_per_kwh": args.wue,
+            "output_dir": str(out_dir / "codecarbon"),
+            "log_level": "error",
+        }
+        (out_dir / "codecarbon").mkdir(parents=True, exist_ok=True)
 
-        final_rows = []
-        for res in raw_results:
-            # Cálculo no cenário Brasil
-            gms_br = calculate_gms(
-                metrics=res["metrics_obj"],
-                bounds=global_bounds,
-                weights=uniform_weights,
-                scale_100=True,
-            )
+        started = datetime.now(timezone.utc).isoformat()
+        df = add_gms(run_dataset(raw, seeds, args.models == "all", repetitions,
+                                 tracker_kwargs, not args.no_mlflow))
+        summary = summarize(df)
+        print(summary[["Modelo", "Acurácia (Média)", "Energia mWh (Mediana)",
+                       "GreenML Score (Mediana)"]].round(3).to_string(index=False))
 
-            # Cálculo de cenários simulados EUA e Alemanha (demonstrando ortogonalidade)
-            e_kwh = res["energy_kwh"]
-            c_us = e_kwh * (regional_scenarios["EUA_East"]["carbon_intensity"] / 1000.0)
-            w_us = e_kwh * regional_scenarios["EUA_East"]["wue"]
-            metrics_us = EnvironmentalMetrics(energy=e_kwh, carbon=c_us, water=w_us)
-            
-            # Limites adaptados para EUA
-            bounds_us = NormalizationBounds(
-                energy_max=global_bounds.energy_max,
-                carbon_max=global_bounds.energy_max * (regional_scenarios["EUA_East"]["carbon_intensity"] / 1000.0),
-                water_max=global_bounds.energy_max * regional_scenarios["EUA_East"]["wue"],
-            )
-            gms_us = calculate_gms(metrics=metrics_us, bounds=bounds_us, weights=uniform_weights, scale_100=True)
-
-            res["GMS_Brasil"] = gms_br
-            res["GMS_EUA"] = gms_us
-
-            final_rows.append(
-                {
-                    "Modelo": res["model_name"],
-                    "Seed": res["seed"],
-                    "Acurácia": res["accuracy"],
-                    "F1-Score": res["f1_macro"],
-                    "Tempo (s)": res["train_time_s"],
-                    "Energia (kWh)": res["energy_kwh"],
-                    "Carbono (kg)": res["carbon_kg"],
-                    "Água (L)": res["water_liters"],
-                    "GreenML Score (BR)": gms_br,
-                    "GreenML Score (US)": gms_us,
-                }
-            )
-
-        df_results = pd.DataFrame(final_rows)
-
-        # 5. Agregação Estatística
-        summary_list = []
-        for model_name_group, group in df_results.groupby("Modelo"):
-            summary_list.append(
-                {
-                    "Modelo": model_name_group,
-                    "Acurácia (Média)": round(group["Acurácia"].mean(), 4),
-                    "Acurácia (Std)": (
-                        round(group["Acurácia"].std(), 4) if len(group) > 1 else 0.0
-                    ),
-                    "F1-Score (Média)": round(group["F1-Score"].mean(), 4),
-                    "Tempo s (Média)": round(group["Tempo (s)"].mean(), 2),
-                    "Energia kWh (Média)": round(group["Energia (kWh)"].mean(), 6),
-                    "Carbono kg (Média)": round(group["Carbono (kg)"].mean(), 6),
-                    "Água L (Média)": round(group["Água (L)"].mean(), 6),
-                    "GreenML Score (Média)": round(group["GreenML Score (BR)"].mean(), 2),
-                    "GreenML Score (Std)": (
-                        round(group["GreenML Score (BR)"].std(), 2)
-                        if len(group) > 1
-                        else 0.0
-                    ),
-                }
-            )
-
-        df_summary = pd.DataFrame(summary_list).sort_values(
-            by="GreenML Score (Média)", ascending=False
-        )
-
-        print(f"\n--- RESUMO {dataset_name.upper()} ---")
-        print(df_summary.to_string(index=False))
-
-        # 6. Gravação dos Resultados
-        output_dir = os.path.join("experiments", "results")
-        os.makedirs(output_dir, exist_ok=True)
-
-        csv_detailed = os.path.join(output_dir, "comparative_results.csv")
-        csv_summary = os.path.join(output_dir, "summary_metrics.csv")
-        md_summary = os.path.join(output_dir, "summary_table.md")
-
-        df_results.round(6).to_csv(csv_detailed, index=False)
-        df_summary.to_csv(csv_summary, index=False)
-
-        with open(md_summary, "w", encoding="utf-8") as f:
-            f.write(f"# Resumo Estatístico - Dataset {dataset_name.upper()}\n\n")
-            f.write(df_summary.to_markdown(index=False))
-            f.write("\n")
-
-    print("\n[OK] Experimento concluído com sucesso!")
+        meta = {
+            "dataset": name, "mode": mode, "seeds": seeds, "repetitions": repetitions,
+            "n_samples": int(len(raw.y)), "started_utc": started,
+            "finished_utc": datetime.now(timezone.utc).isoformat(),
+            "git_commit": _git_commit(), "platform": platform.platform(),
+            "python": platform.python_version(), "config": asdict(config),
+            "carbon_intensity_g_per_kwh": args.carbon_intensity, "wue_l_per_kwh": args.wue,
+        }
+        write_outputs(out_dir, df, summary, meta)
+        print(f"[OK] Resultados em {out_dir}")
 
 
 if __name__ == "__main__":
-    run_experiment()
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    main()

@@ -6,6 +6,6 @@ garantindo comparabilidade, reprodutibilidade e rastreabilidade MLOps via MLflow
 """
 
 from .config import ExperimentConfig
-from .dataset import load_dataset
+from .dataset import load_raw_dataset, split_dataset
 
-__all__ = ["ExperimentConfig", "load_dataset"]
+__all__ = ["ExperimentConfig", "load_raw_dataset", "split_dataset"]

@@ -1,11 +1,17 @@
 """
-dataset.py — Carregador e Pré-processador de Dataset de Benchmark (Seção 5.2 do TCC).
+dataset.py — Carregamento e pré-processamento dos datasets de benchmark (Seção 5.2).
 
-Provedor de dados robusto e ágil para experimentos comparativos.
-Suporta dados textuais (Newsgroups) e tabulares (Breast Cancer, Covtype).
+Não há fallback para dados sintéticos: se um dataset não puder ser obtido, a
+execução é interrompida. Resultados obtidos sobre dados substitutos silenciosos
+seriam inválidos e indistinguíveis dos reais nos arquivos de saída.
 """
 
-import pandas as pd
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 from sklearn.datasets import fetch_20newsgroups, fetch_covtype, load_breast_cancer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
@@ -14,105 +20,85 @@ from sklearn.preprocessing import StandardScaler
 from .config import config
 
 
-def load_dataset(
-    name: str = "newsgroups", quick_run: bool = False, random_state: int = 42
-) -> tuple[list | pd.DataFrame, list | pd.DataFrame, list, list, bool]:
-    """
-    Carrega o dataset selecionado.
+class DatasetUnavailableError(RuntimeError):
+    """O dataset solicitado não pôde ser obtido (ex.: download sem rede)."""
 
-    Retorna:
-        (X_train, X_test, y_train, y_test, is_text)
+
+@dataclass(frozen=True)
+class RawDataset:
+    """Dataset completo, antes da divisão treino/teste."""
+
+    name: str
+    X: Any  # list[str] para texto; np.ndarray para tabular
+    y: np.ndarray
+    is_text: bool
+
+
+def _subsample(X: Any, y: np.ndarray, n: int, seed: int) -> tuple[Any, np.ndarray]:
+    """Subamostragem estratificada e determinística (semente fixa de dados)."""
+    if len(y) <= n:
+        return X, y
+    idx, _ = train_test_split(
+        np.arange(len(y)), train_size=n, random_state=seed, stratify=y
+    )
+    X_sub = [X[i] for i in idx] if isinstance(X, list) else X[idx]
+    return X_sub, y[idx]
+
+
+def load_raw_dataset(name: str, quick_run: bool = False) -> RawDataset:
+    """
+    Carrega o dataset completo (sem divisão).
+
+    Raises:
+        ValueError: nome de dataset não suportado.
+        DatasetUnavailableError: falha ao obter os dados.
     """
     if name not in config.AVAILABLE_DATASETS:
-        raise ValueError(
-            f"Dataset {name} não suportado. Escolha entre: {config.AVAILABLE_DATASETS}"
-        )
+        raise ValueError(f"Dataset {name} não suportado: {config.AVAILABLE_DATASETS}")
 
-    is_text = False
-
-    if name == "newsgroups":
-        is_text = True
-        try:
-            categories = ["rec.autos", "sci.med"]
-            dataset = fetch_20newsgroups(
+    try:
+        if name == "newsgroups":
+            bunch = fetch_20newsgroups(
                 subset="all",
-                categories=categories,
+                categories=config.NEWSGROUPS_CATEGORIES,
                 remove=("headers", "footers", "quotes"),
-                random_state=random_state,
+                random_state=config.DATA_SAMPLE_SEED,
             )
-            data_x = dataset.data
-            labels = dataset.target
-        except Exception:
-            data_x = ["Car engine speed", "Medical clinical care"] * 500
-            labels = [0, 1] * 500
+            X, y, is_text = list(bunch.data), np.asarray(bunch.target), True
+        elif name == "breast_cancer":
+            bunch = load_breast_cancer()
+            X, y, is_text = bunch.data, np.asarray(bunch.target), False
+        else:  # covtype: binarizado (classe 2 vs. demais) e subamostrado
+            bunch = fetch_covtype()
+            X, y, is_text = bunch.data, (bunch.target == 2).astype(int), False
+            X, y = _subsample(X, y, config.COVTYPE_N_SAMPLES, config.DATA_SAMPLE_SEED)
+    except OSError as exc:  # inclui falhas de rede (URLError) e de disco
+        raise DatasetUnavailableError(
+            f"Não foi possível obter o dataset '{name}'. Verifique a conexão ou o "
+            "cache do scikit-learn (~/scikit_learn_data)."
+        ) from exc
 
-    elif name == "breast_cancer":
-        dataset = load_breast_cancer()
-        data_x = dataset.data
-        labels = dataset.target
+    if quick_run:
+        X, y = _subsample(X, y, config.QUICK_RUN_SAMPLES, config.DATA_SAMPLE_SEED)
 
-    elif name == "covtype":
-        # fetch_covtype pode ser grande, limitamos
-        try:
-            dataset = fetch_covtype()
-            data_x = dataset.data
-            labels = dataset.target
-            labels = (labels == 2).astype(int)
-        except Exception:
-            # Fallback seguro para evitar travamento de download de dataset
-            import numpy as np
-            data_x = np.random.randn(5000, 54)
-            labels = np.random.randint(0, 2, 5000)
+    return RawDataset(name=name, X=X, y=y, is_text=is_text)
 
-        n_samples_limit = 500 if quick_run else config.COVTYPE_N_SAMPLES
-        df = pd.DataFrame(data_x)
-        df["label"] = labels
-        df_sampled = df.sample(n=n_samples_limit, random_state=random_state)
-        data_x = df_sampled.drop(columns=["label"]).values
-        labels = df_sampled["label"].values
 
-    if quick_run and name != "covtype":
-        n_samples = 500
-        if isinstance(data_x, list) and len(data_x) > n_samples:
-            df = pd.DataFrame({"text": data_x, "label": labels})
-            df_sampled = df.sample(n=n_samples, random_state=random_state)
-            data_x = df_sampled["text"].tolist()
-            labels = df_sampled["label"].tolist()
-        elif hasattr(data_x, "shape") and data_x.shape[0] > n_samples:
-            df = pd.DataFrame(data_x)
-            df["label"] = labels
-            df_sampled = df.sample(n=n_samples, random_state=random_state)
-            data_x = df_sampled.drop(columns=["label"]).values
-            labels = df_sampled["label"].values
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        data_x,
-        labels,
-        test_size=config.TEST_SIZE,
-        random_state=random_state,
-        stratify=labels if len(set(labels)) > 1 else None,
+def split_dataset(raw: RawDataset, seed: int) -> tuple[Any, Any, np.ndarray, np.ndarray]:
+    """Divisão treino/teste estratificada, dependente da semente."""
+    return train_test_split(
+        raw.X, raw.y, test_size=config.TEST_SIZE, random_state=seed, stratify=raw.y
     )
 
-    return X_train, X_test, y_train, y_test, is_text
 
-
-def preprocess_features(
-    X_train: list | object, X_test: list | object, is_text: bool
-) -> tuple[object, object, object]:
-    """
-    Aplica TF-IDF para textos e StandardScaler para dados tabulares numéricos.
-    """
+def preprocess_features(X_train: Any, X_test: Any, is_text: bool) -> tuple[Any, Any, Any]:
+    """TF-IDF para texto e StandardScaler para dados tabulares (ajustados só no treino)."""
     if is_text:
-        vectorizer = TfidfVectorizer(
+        transformer: Any = TfidfVectorizer(
             max_features=config.MAX_TFIDF_FEATURES,
             stop_words="english",
             sublinear_tf=True,
         )
-        X_train_processed = vectorizer.fit_transform(X_train)
-        X_test_processed = vectorizer.transform(X_test)
-        return X_train_processed, X_test_processed, vectorizer
     else:
-        scaler = StandardScaler()
-        X_train_processed = scaler.fit_transform(X_train)
-        X_test_processed = scaler.transform(X_test)
-        return X_train_processed, X_test_processed, scaler
+        transformer = StandardScaler()
+    return transformer.fit_transform(X_train), transformer.transform(X_test), transformer
