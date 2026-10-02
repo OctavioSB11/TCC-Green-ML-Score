@@ -77,6 +77,44 @@ def test_tracker_read_energy_missing_csv_raises(mock_emissions_tracker_cls, tmp_
 
 
 @patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
+def test_tracker_stale_csv_raises(mock_emissions_tracker_cls, mock_emissions_csv_path):
+    """CSV não modificado durante a medição: a última linha é de outra execução."""
+    tracker = GreenMLTracker(output_dir=mock_emissions_csv_path)
+    tracker.start()  # registra o estado do CSV; nenhuma linha nova é gravada
+
+    with pytest.raises(MeasurementError, match="não foi atualizado"):
+        tracker._read_energy_from_csv()
+
+
+@patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
+def test_tracker_csv_updated_during_measurement_is_read(
+    mock_emissions_tracker_cls, tmp_path
+):
+    """CSV criado ou atualizado entre start() e stop() é aceito como fonte."""
+    csv_path = tmp_path / "emissions.csv"
+    tracker = GreenMLTracker(output_dir=str(tmp_path))
+    tracker.start()
+    csv_path.write_text("energy_consumed,duration\n0.0042,3.0\n", encoding="utf-8")
+
+    assert tracker._read_energy_from_csv() == pytest.approx(0.0042)
+    assert tracker.details.duration_s == pytest.approx(3.0)
+
+
+@patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
+def test_tracker_stop_without_emissions_raises(mock_emissions_tracker_cls):
+    """stop() do CodeCarbon sem retorno numérico não pode virar emissão zero."""
+    mock_instance = MagicMock()
+    mock_instance.stop.return_value = None
+    mock_emissions_tracker_cls.return_value = mock_instance
+
+    tracker = GreenMLTracker(output_dir=".")
+    tracker._read_energy_from_csv = MagicMock(return_value=0.002)
+
+    with pytest.raises(MeasurementError):
+        tracker.stop()
+
+
+@patch("green_ml_score.collectors.codecarbon.EmissionsTracker")
 def test_tracker_prefers_in_memory_measurement(mock_emissions_tracker_cls):
     """A energia e a procedência vêm de final_emissions_data, sem depender do CSV."""
     mock_instance = MagicMock()

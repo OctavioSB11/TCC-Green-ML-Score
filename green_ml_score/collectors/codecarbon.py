@@ -102,6 +102,15 @@ def _details_from(source: Any) -> MeasurementDetails:
     return MeasurementDetails(**values)
 
 
+def _file_signature(path: str) -> tuple[int, int] | None:
+    """Retorna (mtime em ns, tamanho) do arquivo, ou None se ele não existir."""
+    try:
+        stat = os.stat(path)
+    except FileNotFoundError:
+        return None
+    return stat.st_mtime_ns, stat.st_size
+
+
 class GreenMLTracker:
     """
     Rastreador principal do GreenML Score.
@@ -144,10 +153,18 @@ class GreenMLTracker:
 
         self._output_dir: str = codecarbon_kwargs["output_dir"]
         self._output_file: str = codecarbon_kwargs.get("output_file", "emissions.csv")
+        self._csv_signature_at_start: tuple[int, int] | None = None
         self.tracker = EmissionsTracker(**codecarbon_kwargs)
+
+    @property
+    def _csv_path(self) -> str:
+        return os.path.join(self._output_dir, self._output_file)
 
     def start(self) -> None:
         """Inicia a medição de energia e carbono em background."""
+        # Estado do CSV antes da medição: permite detectar, na leitura alternativa,
+        # que o arquivo não recebeu a linha desta medição (linha antiga ≠ medição).
+        self._csv_signature_at_start = _file_signature(self._csv_path)
         self.tracker.start()
 
     def stop(self) -> None:
@@ -158,7 +175,13 @@ class GreenMLTracker:
           - Com carbon_intensity_g_per_kwh informado: C = E × IC_região.
           - Caso contrário: emissão medida pelo CodeCarbon e IC efetiva derivada.
         """
-        measured_emissions = _as_float(self.tracker.stop()) or 0.0
+        measured_emissions = _as_float(self.tracker.stop())
+        if measured_emissions is None:
+            # O CodeCarbon retorna None quando não mediu (tracker não iniciado ou
+            # outra instância em execução); emissão nula seria um valor espúrio.
+            raise MeasurementError(
+                "O CodeCarbon não retornou emissões ao encerrar a medição."
+            )
         self.energy_kwh = self._collect_energy()
 
         if self.carbon_intensity_g_per_kwh is not None:
@@ -188,9 +211,17 @@ class GreenMLTracker:
         Lê ``energy_consumed`` da última linha do CSV do CodeCarbon.
 
         Raises:
-            MeasurementError: se o arquivo não existir, estiver vazio ou malformado.
+            MeasurementError: se o arquivo não existir, estiver vazio, malformado
+                ou não tiver sido modificado desde ``start()`` (a última linha
+                seria de uma medição anterior).
         """
-        csv_path = os.path.join(self._output_dir, self._output_file)
+        csv_path = self._csv_path
+        signature = _file_signature(csv_path)
+        if signature is not None and signature == self._csv_signature_at_start:
+            raise MeasurementError(
+                f"'{csv_path}' não foi atualizado durante a medição; "
+                "a última linha pertence a uma execução anterior."
+            )
         try:
             last_row = pd.read_csv(csv_path).iloc[-1]
         except (FileNotFoundError, pd.errors.EmptyDataError, IndexError) as exc:
