@@ -71,7 +71,9 @@ KWH_TO_MWH: float = 1e6  # 1 kWh = 1.000.000 mWh
 def get_models(include_all: bool, random_state: int, n_jobs: int) -> dict[str, Any]:
     """Estimadores avaliados, todos com o mesmo grau de paralelismo."""
     models: dict[str, Any] = {
-        "Logistic_Regression": LogisticRegression(max_iter=1000, random_state=random_state),
+        "Logistic_Regression": LogisticRegression(
+            max_iter=1000, random_state=random_state
+        ),
         "Random_Forest": RandomForestClassifier(
             n_estimators=100, random_state=random_state, n_jobs=n_jobs
         ),
@@ -80,12 +82,20 @@ def get_models(include_all: bool, random_state: int, n_jobs: int) -> dict[str, A
         try:
             from xgboost import XGBClassifier
         except ImportError as exc:
-            raise ImportError("XGBoost é obrigatório com --models all: pip install xgboost") from exc
+            raise ImportError(
+                "XGBoost é obrigatório com --models all: pip install xgboost"
+            ) from exc
         models["XGBoost"] = XGBClassifier(
-            n_estimators=100, random_state=random_state, n_jobs=n_jobs, eval_metric="logloss"
+            n_estimators=100,
+            random_state=random_state,
+            n_jobs=n_jobs,
+            eval_metric="logloss",
         )
         models["MLP_Neural_Network"] = MLPClassifier(
-            hidden_layer_sizes=(64, 32), max_iter=200, random_state=random_state, early_stopping=True
+            hidden_layer_sizes=(64, 32),
+            max_iter=200,
+            random_state=random_state,
+            early_stopping=True,
         )
     return models
 
@@ -121,7 +131,10 @@ def measure_phase(
             wall_start, cpu_start = time.perf_counter(), time.process_time()
             for _ in range(repetitions):
                 result = action()
-            wall, cpu = time.perf_counter() - wall_start, time.process_time() - cpu_start
+            wall, cpu = (
+                time.perf_counter() - wall_start,
+                time.process_time() - cpu_start,
+            )
         finally:
             tracker.stop()
 
@@ -154,7 +167,9 @@ def run_single(
         return clone(estimator).fit(X_train, y_train)
 
     train, fitted = measure_phase(train_once, repetitions, tracker_kwargs)
-    infer, y_pred = measure_phase(lambda: fitted.predict(X_test), repetitions, tracker_kwargs)
+    infer, y_pred = measure_phase(
+        lambda: fitted.predict(X_test), repetitions, tracker_kwargs
+    )
 
     carbon_kg = train.energy_kwh * tracker_kwargs["carbon_intensity_g_per_kwh"] / 1000.0
     water_l = train.energy_kwh * tracker_kwargs["wue_liters_per_kwh"]
@@ -268,17 +283,31 @@ def write_outputs(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Experimento comparativo do GreenML Score.")
-    parser.add_argument("--quick-run", action="store_true",
-                        help="Subconjunto reduzido, 1 semente e 1 repetição (validação).")
+    parser = argparse.ArgumentParser(
+        description="Experimento comparativo do GreenML Score."
+    )
+    parser.add_argument(
+        "--quick-run",
+        action="store_true",
+        help="Subconjunto reduzido, 1 semente e 1 repetição (validação).",
+    )
     parser.add_argument("--models", default="all", choices=["sklearn", "all"])
     parser.add_argument("--seeds", nargs="+", type=int, default=None)
-    parser.add_argument("--dataset", default="all",
-                        choices=["all", *config.AVAILABLE_DATASETS])
-    parser.add_argument("--carbon-intensity", type=float,
-                        default=config.CARBON_INTENSITY_SAO_PAULO, help="gCO2e/kWh")
-    parser.add_argument("--wue", type=float, default=config.WUE_GOOGLE_2024, help="L/kWh")
-    parser.add_argument("--no-mlflow", action="store_true", help="Não registra no MLflow.")
+    parser.add_argument(
+        "--dataset", default="all", choices=["all", *config.AVAILABLE_DATASETS]
+    )
+    parser.add_argument(
+        "--carbon-intensity",
+        type=float,
+        default=config.CARBON_INTENSITY_SAO_PAULO,
+        help="gCO2e/kWh",
+    )
+    parser.add_argument(
+        "--wue", type=float, default=config.WUE_GOOGLE_2024, help="L/kWh"
+    )
+    parser.add_argument(
+        "--no-mlflow", action="store_true", help="Não registra no MLflow."
+    )
     return parser.parse_args()
 
 
@@ -286,17 +315,34 @@ def log_to_mlflow(row: dict[str, Any], dataset: str, seed: int) -> None:
     import mlflow
 
     with mlflow.start_run(run_name=f"{dataset}_{row['model_name']}_seed_{seed}"):
-        mlflow.log_params({"dataset": dataset, "seed": seed, "model_name": row["model_name"],
-                           "repetitions": row["repetitions"], "n_jobs": config.N_JOBS,
-                           "tracking_mode": row["tracking_mode"]})
-        mlflow.log_metrics({k: v for k, v in row.items()
-                            if isinstance(v, (int, float)) and v == v
-                            and k not in {"seed", "repetitions"}})
+        mlflow.log_params(
+            {
+                "dataset": dataset,
+                "seed": seed,
+                "model_name": row["model_name"],
+                "repetitions": row["repetitions"],
+                "n_jobs": config.N_JOBS,
+                "tracking_mode": row["tracking_mode"],
+            }
+        )
+        mlflow.log_metrics(
+            {
+                k: v
+                for k, v in row.items()
+                if isinstance(v, (int, float))
+                and v == v
+                and k not in {"seed", "repetitions"}
+            }
+        )
 
 
 def run_dataset(
-    raw: RawDataset, seeds: list[int], include_all: bool, repetitions: int,
-    tracker_kwargs: dict[str, Any], use_mlflow: bool,
+    raw: RawDataset,
+    seeds: list[int],
+    include_all: bool,
+    repetitions: int,
+    tracker_kwargs: dict[str, Any],
+    use_mlflow: bool,
 ) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     for seed in seeds:
@@ -307,12 +353,19 @@ def run_dataset(
 
         for model_name in order:
             print(f"  seed={seed:<5} {model_name:<20}", end=" ", flush=True)
-            row = run_single(str(model_name), models[model_name],
-                             (X_tr, X_te, y_tr, y_te), repetitions, tracker_kwargs)
+            row = run_single(
+                str(model_name),
+                models[model_name],
+                (X_tr, X_te, y_tr, y_te),
+                repetitions,
+                tracker_kwargs,
+            )
             row.update({"dataset": raw.name, "seed": seed})
             rows.append(row)
-            print(f"acc={row['accuracy']:.4f}  E_treino={row['energy_j']:.2f} J  "
-                  f"t={row['train_wall_time_s']:.2f} s")
+            print(
+                f"acc={row['accuracy']:.4f}  E_treino={row['energy_j']:.2f} J  "
+                f"t={row['train_wall_time_s']:.2f} s"
+            )
             if use_mlflow:
                 log_to_mlflow(row, raw.name, seed)
     return pd.DataFrame(rows)
@@ -321,16 +374,21 @@ def run_dataset(
 def main() -> None:
     args = parse_args()
     seeds = args.seeds or ([config.SEEDS[0]] if args.quick_run else config.SEEDS)
-    repetitions = config.QUICK_RUN_REPETITIONS if args.quick_run else config.WORKLOAD_REPETITIONS
+    repetitions = (
+        config.QUICK_RUN_REPETITIONS if args.quick_run else config.WORKLOAD_REPETITIONS
+    )
     datasets = config.AVAILABLE_DATASETS if args.dataset == "all" else [args.dataset]
     mode = "quick_run" if args.quick_run else "full"
 
     if not args.no_mlflow:
         import mlflow
+
         mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
     for name in datasets:
-        print(f"\n=== {name.upper()} | modo={mode} | seeds={seeds} | repetições={repetitions}")
+        print(
+            f"\n=== {name.upper()} | modo={mode} | seeds={seeds} | repetições={repetitions}"
+        )
         raw = load_raw_dataset(name, quick_run=args.quick_run)
         out_dir = Path(config.RESULTS_DIR) / name / mode
         tracker_kwargs = {
@@ -342,19 +400,44 @@ def main() -> None:
         (out_dir / "codecarbon").mkdir(parents=True, exist_ok=True)
 
         started = datetime.now(timezone.utc).isoformat()
-        df = add_gms(run_dataset(raw, seeds, args.models == "all", repetitions,
-                                 tracker_kwargs, not args.no_mlflow))
+        df = add_gms(
+            run_dataset(
+                raw,
+                seeds,
+                args.models == "all",
+                repetitions,
+                tracker_kwargs,
+                not args.no_mlflow,
+            )
+        )
         summary = summarize(df)
-        print(summary[["Modelo", "Acurácia (Média)", "Energia mWh (Mediana)",
-                       "GreenML Score (Mediana)"]].round(3).to_string(index=False))
+        print(
+            summary[
+                [
+                    "Modelo",
+                    "Acurácia (Média)",
+                    "Energia mWh (Mediana)",
+                    "GreenML Score (Mediana)",
+                ]
+            ]
+            .round(3)
+            .to_string(index=False)
+        )
 
         meta = {
-            "dataset": name, "mode": mode, "seeds": seeds, "repetitions": repetitions,
-            "n_samples": int(len(raw.y)), "started_utc": started,
+            "dataset": name,
+            "mode": mode,
+            "seeds": seeds,
+            "repetitions": repetitions,
+            "n_samples": int(len(raw.y)),
+            "started_utc": started,
             "finished_utc": datetime.now(timezone.utc).isoformat(),
-            "git_commit": _git_commit(), "platform": platform.platform(),
-            "python": platform.python_version(), "config": asdict(config),
-            "carbon_intensity_g_per_kwh": args.carbon_intensity, "wue_l_per_kwh": args.wue,
+            "git_commit": _git_commit(),
+            "platform": platform.platform(),
+            "python": platform.python_version(),
+            "config": asdict(config),
+            "carbon_intensity_g_per_kwh": args.carbon_intensity,
+            "wue_l_per_kwh": args.wue,
         }
         write_outputs(out_dir, df, summary, meta)
         print(f"[OK] Resultados em {out_dir}")

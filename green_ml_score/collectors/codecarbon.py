@@ -84,13 +84,20 @@ def _as_str(value: Any) -> str | None:
 
 def _details_from(source: Any) -> MeasurementDetails:
     """Extrai detalhes de um objeto EmissionsData ou de uma linha do CSV (Series)."""
-    get = source.get if isinstance(source, (dict, pd.Series)) else (
-        lambda key, default=None: getattr(source, key, default)
+    get = (
+        source.get
+        if isinstance(source, (dict, pd.Series))
+        else (lambda key, default=None: getattr(source, key, default))
     )
     values: dict[str, Any] = {}
     for field_name, source_key in _DETAIL_FIELDS.items():
         raw = get(source_key, None)
-        is_text = field_name in {"tracking_mode", "os", "cpu_model", "codecarbon_version"}
+        is_text = field_name in {
+            "tracking_mode",
+            "os",
+            "cpu_model",
+            "codecarbon_version",
+        }
         values[field_name] = _as_str(raw) if is_text else _as_float(raw)
     return MeasurementDetails(**values)
 
@@ -129,7 +136,10 @@ class GreenMLTracker:
 
         if os.environ.get("CODECARBON_OFFLINE_MODE") == "true":
             codecarbon_kwargs["offline"] = True
-        if codecarbon_kwargs.get("offline") and "country_iso_code" not in codecarbon_kwargs:
+        if (
+            codecarbon_kwargs.get("offline")
+            and "country_iso_code" not in codecarbon_kwargs
+        ):
             codecarbon_kwargs["country_iso_code"] = "BRA"
 
         self._output_dir: str = codecarbon_kwargs["output_dir"]
@@ -159,7 +169,9 @@ class GreenMLTracker:
         else:
             self.emissions_kg = measured_emissions
             self.carbon_intensity = (
-                measured_emissions / self.energy_kwh * 1000.0 if self.energy_kwh > 0 else 0.0
+                measured_emissions / self.energy_kwh * 1000.0
+                if self.energy_kwh > 0
+                else 0.0
             )
 
     def _collect_energy(self) -> float:
@@ -186,7 +198,9 @@ class GreenMLTracker:
 
         energy = _as_float(last_row.get("energy_consumed"))
         if energy is None:
-            raise MeasurementError(f"Coluna 'energy_consumed' inválida em '{csv_path}'.")
+            raise MeasurementError(
+                f"Coluna 'energy_consumed' inválida em '{csv_path}'."
+            )
         self.details = _details_from(last_row)
         return energy
 

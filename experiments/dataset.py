@@ -84,14 +84,18 @@ def load_raw_dataset(name: str, quick_run: bool = False) -> RawDataset:
     return RawDataset(name=name, X=X, y=y, is_text=is_text)
 
 
-def split_dataset(raw: RawDataset, seed: int) -> tuple[Any, Any, np.ndarray, np.ndarray]:
+def split_dataset(
+    raw: RawDataset, seed: int
+) -> tuple[Any, Any, np.ndarray, np.ndarray]:
     """Divisão treino/teste estratificada, dependente da semente."""
     return train_test_split(
         raw.X, raw.y, test_size=config.TEST_SIZE, random_state=seed, stratify=raw.y
     )
 
 
-def preprocess_features(X_train: Any, X_test: Any, is_text: bool) -> tuple[Any, Any, Any]:
+def preprocess_features(
+    X_train: Any, X_test: Any, is_text: bool
+) -> tuple[Any, Any, Any]:
     """TF-IDF para texto e StandardScaler para dados tabulares (ajustados só no treino)."""
     if is_text:
         transformer: Any = TfidfVectorizer(
@@ -101,4 +105,8 @@ def preprocess_features(X_train: Any, X_test: Any, is_text: bool) -> tuple[Any, 
         )
     else:
         transformer = StandardScaler()
-    return transformer.fit_transform(X_train), transformer.transform(X_test), transformer
+    return (
+        transformer.fit_transform(X_train),
+        transformer.transform(X_test),
+        transformer,
+    )

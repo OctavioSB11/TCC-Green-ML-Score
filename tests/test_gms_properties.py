@@ -9,14 +9,28 @@ Seção 4 do texto (IC e WUE constantes ⇒ GMS = E_norm, independentemente dos 
 import numpy as np
 import pytest
 
-from green_ml_score.scoring import EnvironmentalMetrics, NormalizationBounds, Weights, calculate_gms
+from green_ml_score.scoring import (
+    EnvironmentalMetrics,
+    NormalizationBounds,
+    Weights,
+    calculate_gms,
+)
 
 RNG = np.random.default_rng(seed=0)
-WEIGHT_GRID = [Weights(), Weights(0.2, 0.5, 0.3), Weights(0.3, 0.2, 0.5), Weights(1.0, 0.0, 0.0)]
+WEIGHT_GRID = [
+    Weights(),
+    Weights(0.2, 0.5, 0.3),
+    Weights(0.3, 0.2, 0.5),
+    Weights(1.0, 0.0, 0.0),
+]
 
 
-def _metrics(energy: np.ndarray, ic: np.ndarray, wue: np.ndarray) -> list[EnvironmentalMetrics]:
-    return [EnvironmentalMetrics(e, e * c / 1000, e * w) for e, c, w in zip(energy, ic, wue)]
+def _metrics(
+    energy: np.ndarray, ic: np.ndarray, wue: np.ndarray
+) -> list[EnvironmentalMetrics]:
+    return [
+        EnvironmentalMetrics(e, e * c / 1000, e * w) for e, c, w in zip(energy, ic, wue)
+    ]
 
 
 @pytest.mark.parametrize("weights", WEIGHT_GRID)
@@ -33,7 +47,8 @@ def test_weights_matter_when_factors_vary() -> None:
     ms = _metrics(energy, RNG.uniform(50, 700, 50), RNG.uniform(0.2, 1.8, 50))
     bounds = NormalizationBounds.from_metrics_list(ms)
     scores = {
-        i: np.array([calculate_gms(m, bounds, w) for m in ms]) for i, w in enumerate(WEIGHT_GRID)
+        i: np.array([calculate_gms(m, bounds, w) for m in ms])
+        for i, w in enumerate(WEIGHT_GRID)
     }
     assert not np.allclose(scores[1], scores[2])
 

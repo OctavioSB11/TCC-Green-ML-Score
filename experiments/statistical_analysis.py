@@ -46,7 +46,9 @@ def describe(df: pd.DataFrame) -> pd.DataFrame:
     def iqr(s: pd.Series) -> float:
         return float(s.quantile(0.75) - s.quantile(0.25))
 
-    agg = work.groupby(MODEL)[[GMS, "energy_mwh", WALL]].agg(["mean", "std", "median", iqr])
+    agg = work.groupby(MODEL)[[GMS, "energy_mwh", WALL]].agg(
+        ["mean", "std", "median", iqr]
+    )
     agg.columns = [f"{c} [{s}]" for c, s in agg.columns]
     return agg
 
@@ -67,8 +69,10 @@ def paired_tests(df: pd.DataFrame) -> tuple[str, pd.DataFrame | None]:
     post = pd.DataFrame(rows)
     post["p_holm"] = holm(post["p"].tolist())
     if len(wide) < 6:
-        text += (f"\n\nAVISO: com n = {len(wide)} pares, o menor p bilateral possível do "
-                 f"Wilcoxon é {2 / 2 ** len(wide):.3f}; comparações par a par não têm poder.")
+        text += (
+            f"\n\nAVISO: com n = {len(wide)} pares, o menor p bilateral possível do "
+            f"Wilcoxon é {2 / 2 ** len(wide):.3f}; comparações par a par não têm poder."
+        )
     return text, post
 
 
@@ -79,28 +83,49 @@ def build_report(df: pd.DataFrame) -> str:
     groups = [g[GMS].to_numpy() for _, g in df.groupby(MODEL)]
     kw = stats.kruskal(*groups)
     friedman_text, post = paired_tests(df)
-    lines += ["## Testes de hipótese (GMS)\n", friedman_text, "",
-              f"Kruskal-Wallis (sem pareamento): H = {kw.statistic:.4f}; p = {kw.pvalue:.4g}", ""]
+    lines += [
+        "## Testes de hipótese (GMS)\n",
+        friedman_text,
+        "",
+        f"Kruskal-Wallis (sem pareamento): H = {kw.statistic:.4f}; p = {kw.pvalue:.4g}",
+        "",
+    ]
     if post is not None:
-        lines += ["Pós-teste: Wilcoxon pareado com correção de Holm\n",
-                  post.round(4).to_markdown(index=False), ""]
+        lines += [
+            "Pós-teste: Wilcoxon pareado com correção de Holm\n",
+            post.round(4).to_markdown(index=False),
+            "",
+        ]
 
     lines += ["## O GMS carrega informação além de energia e tempo?\n"]
-    for label, col in [("energia", ENERGY), ("tempo de parede", WALL), ("tempo de CPU", CPU)]:
+    for label, col in [
+        ("energia", ENERGY),
+        ("tempo de parede", WALL),
+        ("tempo de CPU", CPU),
+    ]:
         r = stats.spearmanr(df[GMS], df[col])
-        lines.append(f"- Spearman GMS × {label}: ρ = {r.statistic:.4f} (p = {r.pvalue:.3g})")
+        lines.append(
+            f"- Spearman GMS × {label}: ρ = {r.statistic:.4f} (p = {r.pvalue:.3g})"
+        )
     e = df[ENERGY]
     gap = float((df[GMS] - 100 * (1 - e / e.max())).abs().max())
-    lines += ["", f"- max |GMS − 100·(1 − E/E_max)| = {gap:.2e} "
-              "(≈ 0 ⇒ o GMS é função exclusiva da energia neste cenário)", ""]
+    lines += [
+        "",
+        f"- max |GMS − 100·(1 − E/E_max)| = {gap:.2e} "
+        "(≈ 0 ⇒ o GMS é função exclusiva da energia neste cenário)",
+        "",
+    ]
 
     if "ram_energy_share" in df and df["ram_energy_share"].notna().any():
         share = df["ram_energy_share"]
-        lines += ["## Procedência da medição\n",
-                  f"- Modo(s) do CodeCarbon: {sorted(str(x) for x in df['tracking_mode'].dropna().unique())}",
-                  f"- Potência de RAM (W): {sorted(float(x) for x in df['ram_power_w'].dropna().unique())}",
-                  f"- Fração da energia atribuída à RAM: média {share.mean():.1%}, "
-                  f"mín {share.min():.1%}, máx {share.max():.1%}", ""]
+        lines += [
+            "## Procedência da medição\n",
+            f"- Modo(s) do CodeCarbon: {sorted(str(x) for x in df['tracking_mode'].dropna().unique())}",
+            f"- Potência de RAM (W): {sorted(float(x) for x in df['ram_power_w'].dropna().unique())}",
+            f"- Fração da energia atribuída à RAM: média {share.mean():.1%}, "
+            f"mín {share.min():.1%}, máx {share.max():.1%}",
+            "",
+        ]
     return "\n".join(lines)
 
 
