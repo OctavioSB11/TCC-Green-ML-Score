@@ -1,3 +1,13 @@
+"""
+sensitivity_analysis.py — Sensibilidade do GMS aos pesos (w_E, w_C, w_W).
+
+ATENÇÃO METODOLÓGICA: quando IC e WUE são constantes entre as execuções, carbono e
+água são múltiplos da energia e o GMS independe dos pesos (ver
+tests/test_gms_properties.py). Neste cenário, o gráfico gerado deve exibir barras
+idênticas entre os cenários de pesos — o que documenta a degeneração, e não um erro.
+A sensibilidade só se torna informativa com contextos de execução variáveis.
+"""
+
 import os
 import sys
 
@@ -39,11 +49,11 @@ FRIENDLY_NAMES = {
 }
 
 
-def analyze_sensitivity(dataset_name="newsgroups"):
+def analyze_sensitivity(dataset_name: str = "newsgroups", mode: str = "full") -> None:
     csv_path = os.path.join(
-        "experiments", "results", dataset_name, "comparative_results.csv"
+        "experiments", "results", dataset_name, mode, "comparative_results.csv"
     )
-    output_dir = os.path.join("docs", "Results", dataset_name)
+    output_dir = os.path.join("docs", "Results", dataset_name, mode)
 
     if not os.path.exists(csv_path):
         print(
@@ -145,6 +155,7 @@ if __name__ == "__main__":
             if os.path.isdir(os.path.join(base_results, d))
         ]
         for d in datasets:
-            analyze_sensitivity(d)
+            for mode in ("full", "quick_run"):
+                analyze_sensitivity(d, mode)
     else:
         print("Nenhum resultado encontrado. Execute os experimentos primeiro.")

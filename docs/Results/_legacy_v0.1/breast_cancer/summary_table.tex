@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Resultados experimentais comparativos entre acurácia preditiva e métricas ambientais (Média $\pm$ Desvio Padrão sobre 3 sementes).}
+\label{tab:resultados_greenml}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{F1-Score} & \textbf{Tempo (s)} & \textbf{Energia (kWh)} & \textbf{Carbono (kg)} & \textbf{GreenML Score} \\
+\midrule
+Regressão Logística & 0.9600 & 0.9560 & 1.66 & 7.0~$\mu$Wh & 1.0~mg & \textbf{42.1} \\
+Rede Neural (MLP) & 0.8300 & 0.8166 & 1.72 & 7.0~$\mu$Wh & 1.0~mg & \textbf{41.8} \\
+XGBoost & 0.9500 & 0.9447 & 2.02 & 10.0~$\mu$Wh & 1.0~mg & \textbf{21.2} \\
+Random Forest & 0.9300 & 0.9214 & 2.66 & 13.0~$\mu$Wh & 2.0~mg & \textbf{0.0} \\
+\bottomrule
+\end{tabular}
+\end{table}

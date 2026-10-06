@@ -1,0 +1,8 @@
+# Resumo Estatístico - Dataset BREAST_CANCER
+
+| Modelo              |   Acurácia (Média) |   Acurácia (Std) |   F1-Score (Média) |   Tempo s (Média) |   Energia kWh (Média) |   Carbono kg (Média) |   Água L (Média) |   GreenML Score (Média) |   GreenML Score (Std) |
+|:--------------------|-------------------:|-----------------:|-------------------:|------------------:|----------------------:|---------------------:|-----------------:|------------------------:|----------------------:|
+| Logistic_Regression |               0.96 |                0 |             0.956  |              1.66 |               7e-06   |                1e-06 |            4e-06 |                   42.08 |                     0 |
+| MLP_Neural_Network  |               0.83 |                0 |             0.8166 |              1.72 |               7e-06   |                1e-06 |            4e-06 |                   41.81 |                     0 |
+| XGBoost             |               0.95 |                0 |             0.9447 |              2.02 |               1e-05   |                1e-06 |            5e-06 |                   21.24 |                     0 |
+| Random_Forest       |               0.93 |                0 |             0.9214 |              2.66 |               1.3e-05 |                2e-06 |            7e-06 |                    0    |                     0 |
