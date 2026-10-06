@@ -2,10 +2,24 @@
 *.pyc
 __pycache__/
 
+# Caches de ferramentas (pytest, ruff, mypy, cobertura)
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Notebooks
+.ipynb_checkpoints/
+
 # Ambientes e segredos
 *.env
+.env/
 .venv/
 venv/
+env/
 
 # Build / empacotamento
 *.egg-info/
@@ -15,12 +29,32 @@ dist/
 # Planilhas
 *.xlsx
 
+# Arquivos temporários do Word e do sistema (OneDrive/Windows/macOS)
+~$*
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+
+# Claude Code (configurações locais e worktrees)
+.claude/settings.local.json
+.claude/worktrees/
+
 # Artefatos de execução
 *.db
 emissions.csv
+emissions_*.csv
+!experiments/results/_legacy_v0.1/**/emissions_codecarbon_raw.csv
 
 # Artefatos de MLflow / experimentos
 mlruns/
+mlartifacts/
+
+# Execuções de validação (--quick-run); resultados finais continuam versionados
+experiments/results/*/quick_run/
 
 # Dados e modelos versionados fora do git (use DVC)
 data/*
