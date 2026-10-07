@@ -1,0 +1,5 @@
+Modelo,Acurácia (Média),Acurácia (Std),F1-Score (Média),Tempo s (Média),Energia kWh (Média),Carbono kg (Média),Água L (Média),GreenML Score (Média),GreenML Score (Std)
+Logistic_Regression,0.76,0.0,0.7596,1.79,1e-05,1e-06,5e-06,45.46,0.0
+MLP_Neural_Network,0.73,0.0,0.7298,1.89,1.1e-05,1e-06,5e-06,42.43,0.0
+XGBoost,0.73,0.0,0.7287,2.34,1.7e-05,2e-06,9e-06,6.28,0.0
+Random_Forest,0.74,0.0,0.7383,2.61,1.8e-05,2e-06,1e-05,0.0,0.0

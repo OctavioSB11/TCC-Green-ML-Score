@@ -1,0 +1,5 @@
+Modelo,Seed,Acurácia,F1-Score,Tempo (s),Energia (kWh),Carbono (kg),Água (L),GreenML Score
+Logistic_Regression,42,0.96,0.956044,1.662922,7e-06,1e-06,4e-06,42.077385
+Random_Forest,42,0.93,0.921445,2.661907,1.3e-05,2e-06,7e-06,0.0
+XGBoost,42,0.95,0.944684,2.021602,1e-05,1e-06,5e-06,21.238096
+MLP_Neural_Network,42,0.83,0.816633,1.721946,7e-06,1e-06,4e-06,41.814851

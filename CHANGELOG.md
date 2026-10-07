@@ -5,6 +5,24 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/spec/v2.0.0.html).
 
+## [Não lançado] — revisão metodológica (semana 1)
+
+### Corrigido
+- Falha na leitura da energia retornava 0,0 kWh em silêncio (GMS = 100 espúrio); agora lança `MeasurementError`.
+- Experimento media treino e predição juntos, com `n_jobs` diferente entre modelos e acurácia de um modelo distinto do medido.
+- Cenário "EUA" apenas reescalava os limites de normalização e produzia GMS idêntico ao cenário BR; removido.
+- Fallbacks silenciosos para dados sintéticos quando o download de datasets falhava; removidos.
+- Energia rotulada como μWh era mWh (erro de fator 1.000).
+- README de resultados com números e conclusões digitados manualmente; agora gerado a partir dos dados.
+- Resultados de cada dataset sobrescreviam os anteriores; agora gravados em `results/<dataset>/<modo>/`.
+- MLflow registrava GMS calculado com limite fixo de 1 kWh; GMS só é registrado com limites definidos.
+
+### Adicionado
+- `MeasurementDetails`: procedência da medição (modo do CodeCarbon, potências, fração de energia da RAM).
+- `experiments/statistical_analysis.py` (Friedman, Wilcoxon-Holm, Spearman, checagem de degeneração).
+- `tests/test_gms_properties.py`: especificação formal de que GMS = E_norm sob IC/WUE constantes.
+- `run_metadata.json` por execução (commit, plataforma, configuração).
+
 ## [0.1.0] - 2026-09-09
 
 ### Adicionado
