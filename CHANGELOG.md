@@ -5,6 +5,19 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/spec/v2.0.0.html).
 
+## [Não lançado] — revisão metodológica (semana 2)
+
+### Adicionado
+- Módulo `green_ml_score.contexts`: `ExecutionContext` (IC, PUE, WUE on-site, fator hídrico off-site, horário), leitura de contextos via CSV, avaliação modelo × contexto com GMS sobre limites globais, τ_b de Kendall entre os rankings do GMS e da energia e varredura no simplex de pesos.
+- `experiments/context_analysis.py` e modelo vazio `experiments/contexts/contexts.csv`.
+- `green_ml_score.scoring.relative`: razão de energia, custo marginal (J por ponto de F1) e dominância em relação a um modelo de referência.
+- `green_ml_score.reporting.EnvironmentalCard`: cartão ambiental por modelo em Markdown.
+- `ProvenanceWarning` e `provenance_warnings_for()`: avisos de modo `machine`, RAM constante e RAM > 50 % da energia.
+- Experimento: medição de repouso (P₀) e energia líquida E − P₀·t, aquecimento descartado por modelo, score relativo pareado por semente e cartões por modelo.
+
+### Corrigido
+- Fases curtas eram dominadas pelo overhead fixo do CodeCarbon (≈ 1,5 s e dezenas de J por sessão). Cada fase agora é repetida até uma janela mínima (`MIN_MEASUREMENT_WINDOW_S`), e o número efetivo de repetições é registrado.
+
 ## [Não lançado] — revisão metodológica (semana 1)
 
 ### Corrigido

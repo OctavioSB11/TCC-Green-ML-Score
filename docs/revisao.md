@@ -18,15 +18,13 @@ Validação feita fora da máquina de vocês: suíte de testes (40 testes) e
 experimento em `breast_cancer` executados com *stubs* do CodeCarbon e do MLflow.
 **Ainda não foram executados com as bibliotecas reais.**
 
-### Pendente — tarefas para o Claude Code (integrante A)
-1. `pip install -e .[dev,experiments]`; rodar `black .` e `ruff check --fix .`
-   (o código novo não passou pelo black) e depois `pytest`. Corrigir falhas.
-2. Confirmar que o CodeCarbon 3.2.6 preenche `final_emissions_data` ao final de
-   `stop()`. Se não preencher, o fallback via CSV assume, mas registre o fato.
-3. `--quick-run` nos três datasets (newsgroups e covtype exigem download).
-4. Copiar do log de inicialização do CodeCarbon qual backend mede a CPU (RAPL,
-   Intel Power Gadget ou estimativa por TDP) para `docs/ambiente_medicao.md`.
-5. Revisar o diff da branch e fazer merge na `main`.
+### Tarefas para o Claude Code (integrante A)
+1. ~~`pip install -e .[dev,experiments]`; `black`, `ruff` e `pytest`~~ — feito (`f721c37`).
+2. ~~Confirmar `final_emissions_data` no CodeCarbon 3.2.6~~ — feito (`docs/ambiente_medicao.md`).
+3. `--quick-run` nos três datasets: feito apenas em `breast_cancer` (14/10);
+   newsgroups e covtype pendentes.
+4. ~~Registrar o backend de medição da CPU~~ — feito (`84afad6`).
+5. ~~Merge da branch na `main`~~ — feito (`b4ec4fb`).
 
 ### Pendente — correções de integridade no texto (integrante B)
 Corrigir agora apenas o que é **falso**; os números da Seção 8 serão substituídos
@@ -49,7 +47,35 @@ na semana 4.
 - Comprar o medidor de consumo de tomada.
 - Registrar por escrito a mudança de objetivo com o orientador.
 
-## Semana 2 (05/10 – 11/10) — especificação
+## Semana 2 (05/10 – 11/10) — status (implementada em 14/10, não versionada)
+
+| Item | Onde | Estado |
+|---|---|---|
+| 1. Aquecimento | `warm_up()` em `experiments/comparative_experiment.py`; `config.WARMUP`, `--no-warmup` | Feito |
+| 2. Baseline de repouso | `measure_idle()`; `config.IDLE_BASELINE_S` (60 s; 10 s no quick-run), `--idle-seconds`; colunas `energy_net_kwh`, `energy_net_j`, `infer_energy_net_kwh`, `idle_power_w`, `train_session_s` | Feito |
+| 3. Avisos de procedência | `provenance_warnings_for()` e `ProvenanceWarning` em `green_ml_score/collectors/codecarbon.py`; gravados em `run_metadata.json` e nos cartões | Feito |
+| 4. Score relativo | `green_ml_score/scoring/relative.py`; `add_relative_scores()` pareado por semente; colunas `energy_ratio_ref`, `delta_f1_points`, `marginal_cost_j_per_f1_point`, `dominated` | Feito |
+| 5. Módulo `contexts` | `green_ml_score/contexts/` (`ExecutionContext`, `load_contexts_csv`, `evaluate_configurations`, `kendall_tau_b`, `simplex_grid`); script `experiments/context_analysis.py` | Feito; **falta preencher `experiments/contexts/contexts.csv`** (integrante B) |
+| 6. Cartão ambiental | `green_ml_score/reporting/card.py`; gravado em `results/<dataset>/<modo>/cards/<modelo>.md` | Feito |
+
+Validação: `black`, `ruff` e `pytest` (80 testes) passando; `--quick-run` em
+`breast_cancer` executado com CodeCarbon 3.2.6 real.
+
+**Achado do quick-run (14/10) e correção:** com 1 repetição, cada fase durava
+1,5–2,2 s e a energia de sessão (17–28 J) era dominada pelo overhead fixo do
+CodeCarbon; a energia líquida (E − P₀·t) saiu **negativa** para todos os modelos
+(a Regressão Logística "custava" 17 J por treino de 0,02 s).
+
+Correção adotada: **janela mínima de medição** (`MIN_MEASUREMENT_WINDOW_S` = 30 s;
+5 s no quick-run; `--min-window`). Cada fase é repetida, além do mínimo de
+repetições, até ocupar a janela; o número efetivo de repetições é registrado
+(`train_repetitions`, `infer_repetitions`). No mesmo quick-run, a energia por treino
+da Regressão Logística caiu de 17 J para 0,39 J (273 repetições) e a potência
+média implícita (E/t ≈ 19–25 W) ficou coerente entre os modelos. As energias
+líquidas ficaram próximas de zero (−0,5 a +1,8 J), compatíveis com o ruído de um
+P₀ medido por apenas 10 s; na execução completa P₀ é medido por 60 s.
+
+## Semana 2 — especificação original
 
 1. **Aquecimento:** uma execução descartada por modelo, antes da primeira semente.
 2. **Baseline de repouso:** no início de cada dataset, medir ~60 s sem carga e obter
