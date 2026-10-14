@@ -27,6 +27,15 @@ class MeasurementError(RuntimeError):
     """Falha na obtenção de uma medição de energia válida."""
 
 
+class ProvenanceWarning(UserWarning):
+    """A energia reportada é (parcialmente) estimada, e não medida."""
+
+
+# Acima desta fração, a energia atribuída à RAM domina a medição e as diferenças
+# entre modelos passam a refletir sobretudo o tempo de execução.
+RAM_SHARE_WARNING_THRESHOLD: float = 0.5
+
+
 @dataclass(frozen=True)
 class MeasurementDetails:
     """
@@ -55,6 +64,61 @@ class MeasurementDetails:
             return None
         total = sum(parts)
         return self.ram_energy_kwh / total if total > 0 else None
+
+    def provenance_warnings(self) -> list[str]:
+        """
+        Avisos sobre a procedência desta medição isolada.
+
+        Constância da potência de RAM só é detectável entre medições: ver
+        ``provenance_warnings_for``.
+        """
+        warnings_: list[str] = []
+        if self.tracking_mode == "machine":
+            warnings_.append(
+                "tracking_mode = machine: a energia inclui todos os processos da "
+                "máquina, não apenas o processo medido."
+            )
+        share = self.ram_share
+        if share is not None and share > RAM_SHARE_WARNING_THRESHOLD:
+            warnings_.append(
+                f"A RAM responde por {share:.0%} da energia (> "
+                f"{RAM_SHARE_WARNING_THRESHOLD:.0%}); diferenças entre modelos "
+                "refletem sobretudo o tempo de execução."
+            )
+        return warnings_
+
+
+def provenance_warnings_for(details: list[MeasurementDetails]) -> list[str]:
+    """
+    Avisos de procedência de um conjunto de medições (sem repetição).
+
+    Agrega os avisos individuais (um por tipo) e, quando há ao menos duas medições,
+    alerta se a potência de RAM foi idêntica em todas — sinal de que o CodeCarbon
+    usou um valor constante estimado, e não uma medição.
+    """
+    found: list[str] = []
+    modes = {d.tracking_mode for d in details}
+    if "machine" in modes:
+        found.append(
+            "tracking_mode = machine: a energia inclui todos os processos da "
+            "máquina, não apenas o processo medido."
+        )
+    shares = [s for d in details if (s := d.ram_share) is not None]
+    high = [s for s in shares if s > RAM_SHARE_WARNING_THRESHOLD]
+    if high:
+        found.append(
+            f"A RAM responde por mais de {RAM_SHARE_WARNING_THRESHOLD:.0%} da energia "
+            f"em {len(high)} de {len(shares)} medições (máx. {max(high):.0%}); "
+            "diferenças entre modelos refletem sobretudo o tempo de execução."
+        )
+    ram = {d.ram_power_w for d in details if d.ram_power_w is not None}
+    n_ram = sum(d.ram_power_w is not None for d in details)
+    if n_ram >= 2 and len(ram) == 1:
+        found.append(
+            f"Potência de RAM constante ({ram.pop():.3f} W) em {n_ram} medições: "
+            "valor estimado pelo CodeCarbon, não medido."
+        )
+    return found
 
 
 _DETAIL_FIELDS: dict[str, str] = {
