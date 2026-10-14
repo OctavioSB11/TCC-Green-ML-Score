@@ -6,11 +6,14 @@ from green_ml_score.scoring.gms import (
     calculate_gms,
     explain_gms,
 )
+from green_ml_score.scoring.relative import RelativeScore, relative_to_reference
 
 __all__ = [
     "EnvironmentalMetrics",
     "NormalizationBounds",
+    "RelativeScore",
     "Weights",
     "calculate_gms",
     "explain_gms",
+    "relative_to_reference",
 ]
