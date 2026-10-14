@@ -36,6 +36,25 @@ class ExperimentConfig:
     WORKLOAD_REPETITIONS: int = 10
     QUICK_RUN_REPETITIONS: int = 1
 
+    # Janela mínima de medição: cada fase é repetida (além do mínimo acima) até
+    # ocupar ao menos este tempo. Sessões curtas são dominadas pelo overhead fixo
+    # do CodeCarbon (≈ 1,5 s por sessão) e por sua leitura esparsa de potência; no
+    # quick-run de 14/10, fases de 1,5–2 s produziram energia líquida negativa.
+    MIN_MEASUREMENT_WINDOW_S: float = 30.0
+    QUICK_RUN_MIN_WINDOW_S: float = 5.0
+
+    # Baseline de repouso: no início de cada dataset, mede-se a máquina sem carga
+    # para obter a potência ociosa P₀ e reportar a energia líquida E − P₀·t.
+    IDLE_BASELINE_S: float = 60.0
+    QUICK_RUN_IDLE_BASELINE_S: float = 10.0
+
+    # Aquecimento: uma execução (treino + inferência) descartada por modelo, antes
+    # da primeira semente, para estabilizar caches, JIT e frequência da CPU.
+    WARMUP: bool = True
+
+    # Modelo de referência para o score relativo (razão de energia e custo marginal).
+    REFERENCE_MODEL: str = "Logistic_Regression"
+
     # Paralelismo idêntico para TODOS os modelos (estimadores e BLAS/OpenMP).
     # Diferenças de n_jobs entre modelos confundiriam a comparação de energia.
     N_JOBS: int = 1
