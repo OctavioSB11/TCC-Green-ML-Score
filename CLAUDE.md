@@ -9,7 +9,9 @@ critérios baseados só em energia ou tempo.
 Plano de trabalho e status: `docs/revisao.md` (ler antes de qualquer tarefa).
 
 ## Ambiente de medição
-Notebook Intel i5-1235U, Windows 11, CodeCarbon 3.2.6 (tracking_mode = machine).
+Notebook do Danilo: Intel i5-1335U, 16 GB, Windows 11, CodeCarbon 3.2.6
+(tracking_mode = machine). Detalhes e configuração anterior (i5-1235U do Octávio):
+`docs/ambiente_medicao.md`.
 
 ## Regras
 - Nunca editar à mão arquivos em `experiments/results/` nem logs do CodeCarbon;
