@@ -141,7 +141,12 @@ Decisões:
   é o estudo de caso principal, e Breast Cancer Wisconsin e Covertype são verificação
   de robustez em dados tabulares (título inalterado). A execução completa cobre os
   três; os trechos de texto estão no item 3.5 de `revisao_texto_semana5.md`.
-- **D2 — Definição de "dominado" (ΔF1 ≤ 0):** pendente.
+- **D2 — Definição de "dominado" (decidido em 15/10/2026):** dominância de Pareto
+  nos eixos F1 × energia, entre todos os modelos do mesmo dataset e semente (um
+  modelo é dominado se outro tem F1 ≥ e energia ≤, com ao menos uma desigualdade
+  estrita). Justificativa: coerência com a fronteira de Pareto das figuras e porque
+  ΔF1 ≤ 0 com menor energia é compromisso, não dominância. A posição em relação à
+  referência passa a ser registrada à parte (`position_vs_ref`).
 
 ## Semanas seguintes
 - Semana 5 (26/10 – 01/11): reescrita do texto.

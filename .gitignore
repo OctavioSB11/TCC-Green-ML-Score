@@ -48,6 +48,9 @@ Thumbs.db
 emissions.csv
 emissions_*.csv
 !experiments/results/_legacy_v0.1/**/emissions_codecarbon_raw.csv
+# Logs brutos do CodeCarbon das execuções oficiais são evidência e são versionados
+!experiments/results/*/full/codecarbon/emissions.csv
+!experiments/results/energy_validation/codecarbon/emissions.csv
 
 # Artefatos de MLflow / experimentos
 mlruns/

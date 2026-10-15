@@ -113,7 +113,7 @@ class EnvironmentalCard:
                     "|---|---|",
                     f"| Razão de energia E / E_ref | {_fmt(self.energy_ratio_median, '.3g', '×')} |",
                     f"| Custo marginal | {_fmt(self.marginal_cost_median_j_per_f1_point, '.4g', 'J por ponto de F1')} |",
-                    f"| Dominado (ΔF1 ≤ 0) | {dominated} |",
+                    f"| Dominado (Pareto F1 × energia) | {dominated} |",
                     "",
                 ]
         modes = ", ".join(self.tracking_modes) if self.tracking_modes else "—"

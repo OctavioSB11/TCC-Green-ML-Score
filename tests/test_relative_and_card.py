@@ -7,7 +7,14 @@ import math
 import pytest
 
 from green_ml_score.reporting import EnvironmentalCard
-from green_ml_score.scoring import relative_to_reference
+from green_ml_score.scoring import pareto_dominated, relative_to_reference
+from green_ml_score.scoring.relative import (
+    BETTER,
+    CHEAPER_WORSE,
+    COSTLIER_BETTER,
+    REFERENCE,
+    WORSE,
+)
 
 KWH_TO_J = 3.6e6
 
@@ -19,19 +26,42 @@ def test_marginal_cost_in_joules_per_f1_point() -> None:
     assert s.energy_ratio == pytest.approx(3.0)
     assert s.delta_f1_points == pytest.approx(2.0)
     assert s.marginal_cost_j_per_f1_point == pytest.approx(2e-6 * KWH_TO_J / 2.0)
-    assert not s.dominated and not s.is_reference
+    assert s.position == COSTLIER_BETTER and not s.is_reference
 
 
-@pytest.mark.parametrize("f1", [0.90, 0.85])
-def test_no_f1_gain_is_dominated(f1: float) -> None:
-    s = relative_to_reference(2e-6, f1, 1e-6, 0.90)
-    assert s.dominated
-    assert math.isnan(s.marginal_cost_j_per_f1_point)
+@pytest.mark.parametrize(
+    ("energy", "f1", "position"),
+    [
+        (2e-6, 0.90, WORSE),  # mesmo F1, mais energia
+        (2e-6, 0.85, WORSE),
+        (5e-7, 0.85, CHEAPER_WORSE),  # compromisso: não é pior em tudo
+        (5e-7, 0.95, BETTER),
+        (1e-6, 0.95, BETTER),
+    ],
+)
+def test_position_relative_to_reference(
+    energy: float, f1: float, position: str
+) -> None:
+    s = relative_to_reference(energy, f1, 1e-6, 0.90)
+    assert s.position == position
+    if f1 <= 0.90:
+        assert math.isnan(s.marginal_cost_j_per_f1_point)
+
+
+def test_pareto_dominated() -> None:
+    # B é dominado por A (mesmo F1, mais energia); C (mais barato, menos preciso)
+    # e D (mais caro, mais preciso) são compromissos; E é idêntico a A, e pontos
+    # idênticos não se dominam.
+    energy = [1.0, 2.0, 0.5, 3.0, 1.0]
+    f1 = [0.90, 0.90, 0.80, 0.95, 0.90]
+    assert pareto_dominated(energy, f1).tolist() == [False, True, False, False, False]
+    with pytest.raises(ValueError):
+        pareto_dominated([1.0], [0.9, 0.8])
 
 
 def test_reference_itself() -> None:
     s = relative_to_reference(1e-6, 0.9, 1e-6, 0.9, is_reference=True)
-    assert s.is_reference and not s.dominated
+    assert s.is_reference and s.position == REFERENCE
     assert s.energy_ratio == 1.0
     assert math.isnan(s.marginal_cost_j_per_f1_point)
 

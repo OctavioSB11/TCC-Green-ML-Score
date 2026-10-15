@@ -7,6 +7,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/spec
 
 ## [Não lançado] — análise, figuras e tabelas (semana 4)
 
+### Alterado (15/10)
+- Dominância passa a ser de Pareto (F1 × energia) entre todos os modelos da mesma semente (`pareto_dominated`); antes, bastava ΔF1 ≤ 0 em relação à referência. A posição em relação à referência é registrada em `position_vs_ref`.
+
 ### Adicionado
 - `experiments/run_analysis.py`: executa estatística, figuras e análise de contextos para todas as execuções de um modo.
 - `context_analysis.py`: figuras `context_gms_heatmap` (GMS modelo × contexto) e `context_simplex` (τ_b e configuração vencedora no simplex de pesos).

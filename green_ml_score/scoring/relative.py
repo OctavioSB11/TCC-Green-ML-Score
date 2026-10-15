@@ -9,16 +9,32 @@ dataset (ex.: Regressão Logística):
     custo marginal        CM = (E_modelo − E_ref) / ΔF1     [J por ponto de F1]
 
 com ΔF1 = 100 · (F1_modelo − F1_ref), em pontos percentuais. O custo marginal só é
-definido quando o modelo é mais preciso que a referência (ΔF1 > 0); quando
-ΔF1 ≤ 0, o modelo é marcado como dominado.
+definido quando o modelo é mais preciso que a referência (ΔF1 > 0).
+
+Dominância (``pareto_dominated``) segue o sentido de Pareto nos eixos F1 e energia,
+sobre TODOS os modelos de uma mesma execução (dataset e semente): um modelo é
+dominado se outro tem F1 maior ou igual E energia menor ou igual, sendo
+estritamente melhor em ao menos um dos dois. Assim, a marcação coincide com a
+fronteira de Pareto das figuras; um modelo menos preciso porém mais econômico não
+é dominado, pois representa um compromisso legítimo entre os dois eixos.
 """
 
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 
+import numpy as np
+
 KWH_TO_J: float = 3.6e6
+
+# Posição do modelo em relação à referência (quadrantes do plano F1 × energia)
+REFERENCE = "referencia"
+WORSE = "pior_que_referencia"  # ΔF1 ≤ 0 e E ≥ E_ref
+BETTER = "melhor_que_referencia"  # ΔF1 ≥ 0 e E ≤ E_ref (ao menos uma estrita)
+COSTLIER_BETTER = "mais_caro_mais_preciso"  # ΔF1 > 0 e E > E_ref
+CHEAPER_WORSE = "mais_barato_menos_preciso"  # ΔF1 < 0 e E < E_ref
 
 
 @dataclass(frozen=True)
@@ -31,16 +47,29 @@ class RelativeScore:
         delta_f1_points       : 100 · (F1_modelo − F1_ref).
         marginal_cost_j_per_f1_point : (E_modelo − E_ref) em J dividido por ΔF1;
                                 ``nan`` quando ΔF1 ≤ 0 ou para a própria referência.
-        dominated             : True quando ΔF1 ≤ 0 (o modelo não melhora a F1 da
-                                referência); False para a referência.
+        position              : quadrante em relação à referência (``REFERENCE``,
+                                ``WORSE``, ``BETTER``, ``COSTLIER_BETTER``,
+                                ``CHEAPER_WORSE``).
         is_reference          : True para o próprio modelo de referência.
     """
 
     energy_ratio: float
     delta_f1_points: float
     marginal_cost_j_per_f1_point: float
-    dominated: bool
+    position: str
     is_reference: bool = False
+
+
+def _position(delta_f1: float, energy: float, reference_energy: float) -> str:
+    better = delta_f1 > 0
+    worse = delta_f1 < 0
+    cheaper = energy < reference_energy
+    costlier = energy > reference_energy
+    if not better and not cheaper:
+        return WORSE
+    if not worse and not costlier:
+        return BETTER
+    return COSTLIER_BETTER if better else CHEAPER_WORSE
 
 
 def relative_to_reference(
@@ -68,8 +97,26 @@ def relative_to_reference(
     ratio = energy_kwh / reference_energy_kwh
     delta = 100.0 * (f1 - reference_f1)
     if is_reference:
-        return RelativeScore(ratio, delta, math.nan, dominated=False, is_reference=True)
-    if delta <= 0:
-        return RelativeScore(ratio, delta, math.nan, dominated=True)
-    cost = (energy_kwh - reference_energy_kwh) * KWH_TO_J / delta
-    return RelativeScore(ratio, delta, cost, dominated=False)
+        return RelativeScore(ratio, delta, math.nan, REFERENCE, is_reference=True)
+    position = _position(delta, energy_kwh, reference_energy_kwh)
+    cost = (
+        (energy_kwh - reference_energy_kwh) * KWH_TO_J / delta
+        if delta > 0
+        else math.nan
+    )
+    return RelativeScore(ratio, delta, cost, position)
+
+
+def pareto_dominated(energy: Sequence[float], f1: Sequence[float]) -> np.ndarray:
+    """
+    Máscara de dominância de Pareto (minimizar energia, maximizar F1).
+
+    O elemento i é dominado se existe j com E_j ≤ E_i e F1_j ≥ F1_i, sendo ao
+    menos uma das desigualdades estrita. Pontos idênticos não se dominam.
+    """
+    e, f = np.asarray(energy, float), np.asarray(f1, float)
+    if e.shape != f.shape or e.ndim != 1:
+        raise ValueError("energy e f1 devem ser vetores de mesmo tamanho.")
+    no_worse = (e[None, :] <= e[:, None]) & (f[None, :] >= f[:, None])
+    strictly = (e[None, :] < e[:, None]) | (f[None, :] > f[:, None])
+    return (no_worse & strictly).any(axis=1)

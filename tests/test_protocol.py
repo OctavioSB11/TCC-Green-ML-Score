@@ -140,10 +140,10 @@ def test_no_provenance_warnings_for_measured_process() -> None:
 def _results() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "seed": [1, 1, 1, 2, 2, 2],
-            "model_name": ["LR", "RF", "MLP"] * 2,
-            "energy_kwh": [1e-6, 4e-6, 3e-6, 2e-6, 4e-6, 3e-6],
-            "f1_macro": [0.90, 0.92, 0.89, 0.90, 0.90, 0.95],
+            "seed": [1, 1, 1, 2, 2, 2, 3, 3, 3],
+            "model_name": ["LR", "RF", "MLP"] * 3,
+            "energy_kwh": [1e-6, 4e-6, 3e-6, 2e-6, 4e-6, 3e-6, 2e-6, 1e-6, 3e-6],
+            "f1_macro": [0.90, 0.92, 0.89, 0.90, 0.90, 0.95, 0.90, 0.85, 0.80],
         }
     )
 
@@ -156,9 +156,16 @@ def test_add_relative_scores_paired_by_seed() -> None:
     assert out.loc[(1, "RF"), "marginal_cost_j_per_f1_point"] == pytest.approx(
         3e-6 * KWH_TO_J / 2.0
     )
-    assert out.loc[(1, "MLP"), "dominated"]
-    assert out.loc[(2, "RF"), "dominated"]  # ΔF1 = 0
+    assert not out.loc[(1, "RF"), "dominated"]  # mais caro, porém mais preciso
+    assert out.loc[(1, "MLP"), "dominated"]  # dominado pela referência
+    assert out.loc[(2, "RF"), "dominated"]  # dominado também pelo MLP
+    assert not out.loc[(2, "MLP"), "dominated"]
     assert out.loc[(2, "MLP"), "energy_ratio_ref"] == pytest.approx(1.5)
+    # Mais barato e menos preciso que a referência: compromisso, não dominado
+    assert not out.loc[(3, "RF"), "dominated"]
+    assert out.loc[(3, "RF"), "position_vs_ref"] == "mais_barato_menos_preciso"
+    # Dominado pelo RF (não pela referência): mais caro e menos preciso que ambos
+    assert out.loc[(3, "MLP"), "dominated"]
 
 
 def test_add_relative_scores_requires_reference() -> None:

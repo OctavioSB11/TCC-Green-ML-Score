@@ -73,7 +73,10 @@ from green_ml_score.scoring.gms import (  # noqa: E402
     Weights,
     calculate_gms,
 )
-from green_ml_score.scoring.relative import relative_to_reference  # noqa: E402
+from green_ml_score.scoring.relative import (  # noqa: E402
+    pareto_dominated,
+    relative_to_reference,
+)
 
 KWH_TO_J: float = 3.6e6
 KWH_TO_MWH: float = 1e6  # 1 kWh = 1.000.000 mWh
@@ -359,7 +362,8 @@ def add_gms(df: pd.DataFrame) -> pd.DataFrame:
 def add_relative_scores(df: pd.DataFrame, reference: str) -> pd.DataFrame:
     """
     Score relativo à referência, pareado por semente: razão de energia, ΔF1 (pontos),
-    custo marginal (J por ponto de F1) e marcação de dominância.
+    custo marginal (J por ponto de F1), quadrante em relação à referência e
+    dominância de Pareto (F1 × energia) entre todos os modelos da mesma semente.
 
     Raises:
         ValueError: se a referência não tiver sido executada em alguma semente.
@@ -387,7 +391,12 @@ def add_relative_scores(df: pd.DataFrame, reference: str) -> pd.DataFrame:
     out["marginal_cost_j_per_f1_point"] = [
         s.marginal_cost_j_per_f1_point for s in scores
     ]
-    out["dominated"] = [s.dominated for s in scores]
+    out["position_vs_ref"] = [s.position for s in scores]
+    out["dominated"] = False
+    for _, idx in df.groupby("seed").groups.items():
+        g = df.loc[idx]
+        out.loc[idx, "dominated"] = pareto_dominated(g["energy_kwh"], g["f1_macro"])
+    out["dominated"] = out["dominated"].astype(bool)
     return out
 
 

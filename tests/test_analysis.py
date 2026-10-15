@@ -70,7 +70,8 @@ def test_latex_table_and_readme_use_data() -> None:
     agg = aggregate(_results())
     tex = latex_table(agg, "breast_cancer", "full")
     assert r"breast\_cancer" in tex and "4 semente(s)" in tex
-    assert "ref." in tex and "dominado" in tex
+    assert "ref." in tex and r"\textbf{Dominado}" in tex
+    assert r"100\%" in tex  # MLP marcado como dominado em todas as sementes
     assert tex.count(r"\\") >= 4
     md = readme(agg, "breast_cancer", "full")
     assert "E/E_ref" in md

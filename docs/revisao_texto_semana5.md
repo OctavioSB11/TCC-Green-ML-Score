@@ -44,10 +44,13 @@ demonstração GMS = E_norm (4.3). **Nada pendente desta lista.**
 - **D1 — Datasets. DECIDIDO (15/10/2026):** manter os três datasets; o 20 Newsgroups
   é o estudo de caso principal e Breast Cancer Wisconsin e Covertype são verificação
   de robustez em dados tabulares. Título inalterado. Trechos de texto no item 3.5.
-- **D2 — Definição de "dominado".** O código marca como dominado todo modelo sem ganho
-  de F1 sobre a referência (ΔF1 ≤ 0), mesmo que gaste menos energia. Como a referência
-  (Regressão Logística) foi a mais econômica em todos os quick-runs, na prática os
-  dois critérios coincidem; basta declarar a definição no texto (item 3.4).
+- **D2 — Definição de "dominado". DECIDIDO (15/10/2026):** dominância de Pareto nos
+  eixos F1 × energia, entre todos os modelos do mesmo dataset e semente: um modelo é
+  dominado se outro tem F1 maior ou igual e energia menor ou igual, sendo
+  estritamente melhor em ao menos um dos dois. Coincide com a fronteira de Pareto
+  das figuras; um modelo menos preciso porém mais econômico não é dominado (é um
+  compromisso). Implementado em `pareto_dominated()` (`green_ml_score/scoring/relative.py`).
+  Texto no item 3.4.
 
 ---
 
@@ -151,8 +154,14 @@ métrica.
 
 > (d) Métricas relativas à referência: para cada semente, a razão de energia
 > E / E_ref e o custo marginal (E − E_ref) / ΔF1, em joules por ponto percentual de
-> F1, tomando a Regressão Logística como referência. Quando ΔF1 ≤ 0, o modelo não
-> melhora a qualidade preditiva da referência e é marcado como dominado.
+> F1, tomando a Regressão Logística como referência; o custo marginal só é definido
+> quando o modelo é mais preciso que a referência (ΔF1 > 0). Adicionalmente, em cada
+> semente, um modelo é considerado dominado, no sentido de Pareto, quando outro
+> modelo apresenta F1-Score maior ou igual e consumo energético menor ou igual, sendo
+> estritamente melhor em ao menos um dos critérios; reporta-se a fração das sementes
+> em que cada modelo é dominado. Um modelo menos preciso porém mais econômico que os
+> demais não é dominado, pois representa um compromisso legítimo entre qualidade
+> preditiva e custo ambiental.
 >
 > (e) Métricas de medição: energia líquida de repouso, número efetivo de repetições
 > por fase e avisos de procedência (modo de rastreamento da máquina inteira, potência
@@ -317,5 +326,5 @@ Figura `gms_barchart.png`: usar só se necessário, com a nota de que, em contex
    não há H3/H4.
 2. Validação pela bateria (≈ 1 h) e execução completa (≈ 4–6 h), conforme
    `docs/execucao_completa.md`.
-3. Decisão D2 (D1 decidida em 15/10: três datasets).
+3. ~~Decisões D1 e D2~~ — ambas decididas em 15/10.
 4. Registrar por escrito, com o orientador, a mudança de objetivo (item 2).

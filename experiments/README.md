@@ -26,7 +26,9 @@ Acréscimos da semana 2, por dataset:
    da primeira semente.
 8. **Score relativo:** por semente, cada modelo é comparado ao de referência
    (`REFERENCE_MODEL`, Regressão Logística): razão E/E_ref e custo marginal
-   (E − E_ref) / ΔF1 em J por ponto de F1; com ΔF1 ≤ 0 o modelo é marcado como dominado.
+   (E − E_ref) / ΔF1 em J por ponto de F1 (definido só com ΔF1 > 0). Um modelo é
+   marcado como dominado (Pareto) quando outro modelo da mesma semente tem F1 ≥ e
+   energia ≤, com ao menos uma desigualdade estrita.
 9. **Procedência:** avisos (`ProvenanceWarning`) quando `tracking_mode = machine`,
    quando a potência de RAM é constante entre medições ou quando a RAM responde por
    mais de 50 % da energia.

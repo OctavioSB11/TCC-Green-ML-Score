@@ -33,6 +33,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
+from green_ml_score.scoring.relative import pareto_dominated  # noqa: E402
+
 RESULTS_DIR = Path("experiments/results")
 FIGURES_DIR = Path("docs/Results")
 KWH_TO_J: float = 3.6e6
@@ -138,12 +140,7 @@ def pareto_front(energy: np.ndarray, f1: np.ndarray) -> np.ndarray:
     Um ponto é dominado se outro tem energia ≤ e F1 ≥, com ao menos uma desigualdade
     estrita.
     """
-    e, f = np.asarray(energy, float), np.asarray(f1, float)
-    keep = np.ones(e.size, bool)
-    for i in range(e.size):
-        better = (e <= e[i]) & (f >= f[i]) & ((e < e[i]) | (f > f[i]))
-        keep[i] = not better.any()
-    return keep
+    return ~pareto_dominated(energy, f1)
 
 
 # ---------------------------------------------------------------------------
@@ -308,14 +305,14 @@ def latex_table(agg: pd.DataFrame, dataset: str, mode: str) -> str:
     """Tabela booktabs: qualidade, energia, tempo, score relativo e GMS."""
     n = int(agg["n"].max())
     has_rel = "energy_ratio_median" in agg
-    cols = "lcccccc" + ("cc" if has_rel else "")
+    cols = "lcccccc" + ("ccc" if has_rel else "")
     head = (
         r"\textbf{Modelo} & \textbf{Acurácia} & \textbf{F1} & "
         r"\textbf{Energia (J)} & \textbf{Líquida (J)} & \textbf{Tempo (s)} & "
         r"\textbf{GMS}"
     )
     if has_rel:
-        head += r" & \textbf{$E/E_{ref}$} & \textbf{J/ponto F1}"
+        head += r" & \textbf{$E/E_{ref}$} & \textbf{J/ponto F1} & \textbf{Dominado}"
     tex_dataset = dataset.replace("_", r"\_")
     tex_mode = mode.replace("_", "-")
     lines = [
@@ -324,7 +321,9 @@ def latex_table(agg: pd.DataFrame, dataset: str, mode: str) -> str:
         r"\small",
         rf"\caption{{Resultados no dataset {tex_dataset} ({tex_mode}): "
         rf"média $\pm$ desvio (acurácia, F1) e mediana [Q1; Q3] (energia, tempo, GMS) "
-        rf"sobre {n} semente(s). Energia de treino por execução.}}",
+        rf"sobre {n} semente(s). Energia de treino por execução. Dominado: fração "
+        rf"das sementes em que outro modelo tem F1 $\geq$ e energia $\leq$, com "
+        rf"ao menos uma desigualdade estrita; J/ponto F1 só é definido com ganho de F1.}}",
         rf"\label{{tab:resultados_{dataset}_{mode}}}",
         rf"\begin{{tabular}}{{{cols}}}",
         r"\toprule",
@@ -356,8 +355,9 @@ def latex_table(agg: pd.DataFrame, dataset: str, mode: str) -> str:
                 (
                     "ref."
                     if r["is_reference"]
-                    else ("dominado" if np.isnan(cost) else f"{cost:.3g}")
+                    else ("--" if np.isnan(cost) else f"{cost:.3g}")
                 ),
+                f"{r['dominated_share']:.0%}".replace("%", r"\%"),
             ]
         lines.append(" & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
