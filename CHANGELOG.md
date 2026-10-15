@@ -5,10 +5,24 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/spec/v2.0.0.html).
 
+## [Não lançado] — análise, figuras e tabelas (semana 4)
+
+### Adicionado
+- `experiments/run_analysis.py`: executa estatística, figuras e análise de contextos para todas as execuções de um modo.
+- `context_analysis.py`: figuras `context_gms_heatmap` (GMS modelo × contexto) e `context_simplex` (τ_b e configuração vencedora no simplex de pesos).
+- `statistical_analysis.py`: testes pareados também sobre a energia, score relativo, energia líquida, repetições efetivas e avisos de `run_metadata.json`.
+
+### Alterado
+- `generate_results.py` reescrito: figuras de energia (bruta e líquida, escala log) e tempo, F1 × energia com fronteira de Pareto, GMS com nota de degeneração; tabela LaTeX e README a partir dos dados (sem número de sementes, limites de eixo ou "região ótima" fixos); diretórios de legado (`_*`) não são mais reprocessados.
+- Figuras de quick-run (`docs/Results/*/quick_run/`) deixam de ser versionadas.
+
+### Removido
+- `experiments/sensitivity_analysis.py` (substituído pelo módulo `contexts`) e o gráfico de radar (com IC e WUE constantes, carbono e água repetiam a energia).
+
 ## [Não lançado] — preparação da execução completa (semana 3)
 
 ### Adicionado
-- `experiments/meter_validation.py`: validação do CodeCarbon com medidor de tomada (fases de repouso e carga; comparação da energia incremental).
+- `experiments/energy_validation.py`: validação física do CodeCarbon sem custo, pela descarga da bateria do notebook lida via WMI (potência de descarga integrada e queda da carga restante); fases de repouso e carga; comparação da energia incremental. Medidor de tomada mantido como fonte opcional (`--source meter`). Substitui `meter_validation.py`.
 - `docs/execucao_completa.md`: roteiro da execução completa (preparação da máquina, comandos, tempos estimados, critérios de descarte).
 
 ## [Não lançado] — revisão metodológica (semana 2)

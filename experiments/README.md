@@ -41,8 +41,8 @@ python experiments/context_analysis.py experiments/results/newsgroups/full \
 
 Os contextos são lidos de `experiments/contexts/contexts.csv` (ver o README da pasta).
 
-Validação com medidor de tomada e roteiro da execução completa:
-`experiments/meter_validation.py` e `docs/execucao_completa.md`.
+Validação física pela bateria e roteiro da execução completa:
+`experiments/energy_validation.py` e `docs/execucao_completa.md`.
 
 ## Como executar
 
@@ -55,9 +55,8 @@ python experiments/comparative_experiment.py --quick-run --dataset breast_cancer
 # Execução completa de um dataset (10 sementes, 10 repetições)
 python experiments/comparative_experiment.py --dataset newsgroups
 
-# Análise estatística, figuras e tabelas
-python experiments/statistical_analysis.py experiments/results/newsgroups/full
-python experiments/generate_results.py
+# Análise estatística, figuras, tabelas e contextos (todas as execuções full)
+python experiments/run_analysis.py
 ```
 
 **Execuções completas que serão usadas no TCC** devem ser feitas com a máquina

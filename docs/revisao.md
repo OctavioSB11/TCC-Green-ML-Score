@@ -43,7 +43,7 @@ na semana 4.
 | Conclusão | Remover "seis arquiteturas" |
 
 ### Pendente — dupla
-- Comprar o medidor de consumo de tomada.
+- ~~Comprar o medidor de consumo de tomada~~ — descartado (sem custo); substituído pela validação via bateria (14/10).
 - Registrar por escrito a mudança de objetivo com o orientador.
 
 ## Semana 2 (05/10 – 11/10) — status (implementada em 14/10, não versionada)
@@ -100,13 +100,49 @@ sustentabilidade) e consumo hídrico por fonte de geração (Macknick et al., 20
 | Item | Estado |
 |---|---|
 | Roteiro da execução completa (`docs/execucao_completa.md`) | Feito |
-| Script de validação com medidor (`experiments/meter_validation.py`), com análise da energia incremental ΔE = E_carga − E_repouso | Feito |
+| Script de validação física sem custo (`experiments/energy_validation.py`): descarga da bateria via WMI; análise da energia incremental ΔE = E_carga − E_repouso | Feito; teste de 60 s funcionou nesta máquina |
 | `--quick-run` em breast_cancer, newsgroups e covtype com CodeCarbon real (14/10, notebook do Danilo) | Feito: os três concluídos sem erro; P₀ entre 15,3 e 16,7 W; a Regressão Logística foi a mais econômica nos três (0,4–0,6 J por treino) |
 | Escolher a máquina de medição | Feito (14/10): notebook do Danilo (i5-1335U); `docs/ambiente_medicao.md` atualizado, com a configuração anterior (i5-1235U do Octávio) como histórico |
 | Preencher `experiments/contexts/contexts.csv` com fontes | **Integrante B** |
-| Validação com o medidor e execução completa (3 datasets) | **Dupla**, seguindo o roteiro |
+| Validação física pela bateria e execução completa (3 datasets) | **Dupla**, seguindo o roteiro |
+
+## Semana 4 (19/10 – 25/10) — código de análise pronto (14/10)
+
+Validado sobre os quick-runs; quando a execução completa existir, basta
+`python experiments/run_analysis.py`.
+
+| Item | Onde |
+|---|---|
+| Orquestração (estatística + figuras + contextos, por dataset) | `experiments/run_analysis.py` |
+| Estatística: Friedman/Wilcoxon-Holm também sobre a energia; score relativo; energia líquida e repetições; avisos de procedência | `experiments/statistical_analysis.py` → `stats_report.md` |
+| Figuras: energia (bruta e líquida, log) e tempo; F1 × energia com fronteira de Pareto; GMS com nota de degeneração | `experiments/generate_results.py` → `docs/Results/<dataset>/<modo>/` |
+| Tabela booktabs com N de sementes, IQR, E/E_ref e J por ponto de F1 | `summary_table.tex` |
+| Figuras da pergunta de pesquisa: GMS modelo × contexto; τ_b e configuração vencedora no simplex de pesos | `experiments/context_analysis.py` (exige `contexts.csv` preenchido) |
+| `sensitivity_analysis.py` removido (substituído pelo módulo `contexts`) | — |
+| Gráfico de radar removido: com IC e WUE constantes, carbono e água repetiam o eixo de energia | — |
+
+Observação da análise dos quick-runs: com contextos fictícios de teste, a
+Regressão Logística venceu em todo o simplex, pois sua energia é 15–55× menor
+que a dos demais modelos. Diferenças de IC entre regiões (até ~10×) só alteram a
+seleção entre modelos de energia próxima; o efeito do contexto aparece sobretudo
+na escolha da região/horário para um mesmo modelo. Isso deve orientar a redação
+das novas hipóteses (semana 5).
+
+## Semana 5 (26/10 – 01/11) — rascunho de revisão do texto (14/10)
+
+`docs/revisao_texto_semana5.md`: inconsistências entre o `.docx` (05/10) e o código
+(hardware, versões, protocolo de medição), objetivo geral alinhado à pergunta de
+pesquisa, nova proposição analítica para contextos distintos (GMS = 1 − E·k,
+verificada em `tests/test_contexts.py`), hipóteses H1–H4 refutáveis, limitações e
+estrutura da Seção 8.
+
+Decisões:
+- **D1 — Datasets (decidido em 15/10/2026):** manter os três datasets; 20 Newsgroups
+  é o estudo de caso principal, e Breast Cancer Wisconsin e Covertype são verificação
+  de robustez em dados tabulares (título inalterado). A execução completa cobre os
+  três; os trechos de texto estão no item 3.5 de `revisao_texto_semana5.md`.
+- **D2 — Definição de "dominado" (ΔF1 ≤ 0):** pendente.
 
 ## Semanas seguintes
-- Semana 4 (19/10 – 25/10): análise, figuras e tabelas.
 - Semana 5 (26/10 – 01/11): reescrita do texto.
 - Folga (02/11 – 08/11): revisão final e entrega.

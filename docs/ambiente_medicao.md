@@ -4,7 +4,7 @@ Registro de como o CodeCarbon obtém energia na máquina de medição. Verificad
 14/10/2026 com o log de inicialização (`log_level="info"`) do `EmissionsTracker`.
 
 **Máquina de medição oficial (decisão da dupla, 14/10/2026): notebook do Danilo.**
-A validação com o medidor de tomada e todas as execuções completas são feitas nela.
+A validação física (descarga da bateria) e todas as execuções completas são feitas nela.
 A configuração usada até 01/10/2026 (notebook do Octávio) está registrada no fim
 deste documento, apenas como histórico.
 
@@ -50,8 +50,17 @@ energia total (RAM 10,0 W; CPU ≈ 7,09 W).
   hardware. O texto deve dizer isso explicitamente.
 - Como a RAM tem potência constante, a energia de RAM é tempo × 10 W; diferenças
   entre modelos refletem principalmente o tempo de execução e a carga da CPU.
-- A validação com o medidor de tomada (`experiments/meter_validation.py`) é a
-  única medição física disponível; ela deve ser comparada com essas estimativas.
+- A única referência física disponível sem custo é a **bateria** do notebook: o
+  Windows informa via WMI (`root\wmi:BatteryStatus`) a potência de descarga (mW,
+  atualizada a cada ~10–20 s) e a carga restante (mWh, em passos de ~1 % ≈ 590 mWh;
+  capacidade total atual 58.976 mWh). `experiments/energy_validation.py` compara
+  as estimativas do CodeCarbon com essa referência.
+- Teste preliminar de 14/10 (1 tentativa, fases de 60 s, com outros programas
+  abertos; **não conclusivo**): em repouso, CodeCarbon 21,3 W × bateria 11,6 W;
+  incremento da carga (Random Forest, 1 thread), CodeCarbon +0,9 W × bateria +5,6 W.
+  Se confirmado na validação completa, indica que o CodeCarbon superestima a
+  potência absoluta (RAM constante de 10 W e TDP de 55 W) e subestima o custo
+  incremental da carga nesta máquina.
 - O aviso de procedência da semana 2 (`tracking_mode = machine`, potência de RAM
   constante e, em fases curtas ou leves, RAM > 50 % da energia) será disparado
   nas execuções desta máquina.

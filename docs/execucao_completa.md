@@ -7,14 +7,14 @@ na medição (`tracking_mode = machine`).
 ## 0. Máquina de medição
 
 **Notebook do Danilo** (i5-1335U, 16 GB, Windows 11, CodeCarbon 3.2.6), decidido
-pela dupla em 14/10/2026. A validação com o medidor e **todas** as execuções
+pela dupla em 14/10/2026. A validação física e **todas** as execuções
 completas devem ser feitas nele; resultados de outra máquina não são comparáveis
 (o CodeCarbon usa modelos de potência diferentes). Detalhes em
 `docs/ambiente_medicao.md`.
 
 ## 1. Preparação da máquina
 
-- [ ] Notebook **na tomada**, ligado pelo **medidor**, bateria acima de 80 %.
+- [ ] Experimento: notebook **na tomada**. Validação física: **na bateria** (ver seção 2).
 - [ ] Plano de energia do Windows fixo (ex.: "Equilibrado") e anotado; brilho fixo.
 - [ ] Windows Update pausado; antivírus sem varredura agendada; OneDrive pausado.
 - [ ] Fechar navegador, IDE, Claude/agentes, Teams/Discord etc.
@@ -24,18 +24,29 @@ completas devem ser feitas nele; resultados de outra máquina não são compará
   no notebook do Danilo; faça-o antes, com `--quick-run`, e não durante a medição.
 - [ ] Registrar data, hora de início e temperatura ambiente aproximada.
 
-## 2. Validação com o medidor (antes do experimento)
+## 2. Validação física pela bateria (antes do experimento, sem custo)
+
+Referência física: a descarga da bateria do próprio notebook, lida via WMI.
+
+1. Carregue a bateria até 100 % e **desconecte o carregador**.
+2. Mantenha brilho fixo e o mesmo modo de energia do Windows do experimento
+   (ex.: "Melhor desempenho"); desative a economia de bateria.
+3. Execute:
 
 ```powershell
 cd "<pasta do repositório>"
 .venv\Scripts\activate
-python experiments/meter_validation.py --trials 3 --duration 600
+python experiments/energy_validation.py --trials 3 --duration 600
 ```
 
-O script pede a leitura acumulada do medidor (Wh) no início e no fim de cada fase
-(repouso e carga, 10 min cada, 3 tentativas ≈ 1 h). Se o medidor só mostrar
-potência instantânea, use `--meter-mode power` e digite a potência média observada.
-Saída: `experiments/results/meter_validation/*.csv` e `*.md`.
+São 3 tentativas × (10 min de repouso + 10 min de carga) ≈ 1 h, consumindo cerca
+de 20–25 Wh (≈ 40 % da bateria). O script interrompe se o carregador for
+conectado ou se a carga cair abaixo de 25 %. Saída:
+`experiments/results/energy_validation/*.csv` e `*.md`.
+
+A comparação principal é a energia **incremental** da carga (ΔE = carga − repouso),
+que cancela tela, Wi-Fi e demais componentes que o CodeCarbon não vê. Se algum dia
+houver um medidor de tomada, use `--source meter` (na tomada).
 
 ## 3. Experimento completo
 
@@ -64,12 +75,12 @@ Remova `--no-mlflow` se quiser os registros no MLflow (`mlruns/` não é version
 ## 4. Análise
 
 ```powershell
-python experiments/statistical_analysis.py experiments/results/breast_cancer/full
-python experiments/statistical_analysis.py experiments/results/newsgroups/full
-python experiments/statistical_analysis.py experiments/results/covtype/full
-# após preencher experiments/contexts/contexts.csv:
-python experiments/context_analysis.py experiments/results/newsgroups/full --contexts experiments/contexts/contexts.csv
+python experiments/run_analysis.py
 ```
+
+Para cada dataset, gera `stats_report.md` (em `experiments/results/<dataset>/full/`),
+as figuras e a tabela LaTeX (em `docs/Results/<dataset>/full/`) e, se
+`experiments/contexts/contexts.csv` estiver preenchido, a avaliação modelo × contexto.
 
 ## 5. Versionamento
 
@@ -77,7 +88,7 @@ Os resultados `full/` são versionados (os `quick_run/` não):
 
 ```powershell
 git add experiments/results docs/ambiente_medicao.md
-git commit -m "resultados: execução completa e validação com medidor"
+git commit -m "resultados: execução completa e validação física"
 git push -u origin main
 ```
 
