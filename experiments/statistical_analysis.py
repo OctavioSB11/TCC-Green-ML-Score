@@ -10,13 +10,18 @@ no mesmo diretório, contendo:
   - Friedman (execuções pareadas por semente) e Kruskal-Wallis;
   - pós-teste pareado de Wilcoxon com correção de Holm;
   - correlações de Spearman do GMS com energia, tempo de parede e tempo de CPU;
+  - Friedman e Wilcoxon-Holm também sobre a energia de treino;
+  - score relativo à referência (razão de energia, custo marginal, dominância);
+  - energia líquida de repouso e número efetivo de repetições;
   - verificação de degeneração (GMS ≡ 100·(1 − E/E_max));
-  - diagnóstico de procedência (modo do CodeCarbon e fração de energia da RAM).
+  - diagnóstico de procedência (modo do CodeCarbon, fração de energia da RAM e
+    avisos registrados em ``run_metadata.json``).
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from itertools import combinations
 from pathlib import Path
@@ -53,9 +58,9 @@ def describe(df: pd.DataFrame) -> pd.DataFrame:
     return agg
 
 
-def paired_tests(df: pd.DataFrame) -> tuple[str, pd.DataFrame | None]:
+def paired_tests(df: pd.DataFrame, value: str = GMS) -> tuple[str, pd.DataFrame | None]:
     """Friedman + Wilcoxon pareado (Holm). Exige o mesmo conjunto de sementes por modelo."""
-    wide = df.pivot(index=SEED, columns=MODEL, values=GMS).dropna()
+    wide = df.pivot(index=SEED, columns=MODEL, values=value).dropna()
     if len(wide) < 3 or wide.shape[1] < 3:
         return "Friedman: requer ≥ 3 sementes completas e ≥ 3 modelos.", None
     fr = stats.friedmanchisquare(*wide.T.to_numpy())
@@ -76,7 +81,41 @@ def paired_tests(df: pd.DataFrame) -> tuple[str, pd.DataFrame | None]:
     return text, post
 
 
-def build_report(df: pd.DataFrame) -> str:
+def relative_summary(df: pd.DataFrame) -> pd.DataFrame | None:
+    """Score relativo à referência por modelo (medianas e fração dominada)."""
+    if "energy_ratio_ref" not in df:
+        return None
+    return df.groupby(MODEL).agg(
+        **{
+            "E/E_ref (mediana)": ("energy_ratio_ref", "median"),
+            "ΔF1 pontos (mediana)": ("delta_f1_points", "median"),
+            "J por ponto de F1 (mediana)": ("marginal_cost_j_per_f1_point", "median"),
+            "dominado (fração)": ("dominated", "mean"),
+        }
+    )
+
+
+def measurement_summary(df: pd.DataFrame) -> pd.DataFrame | None:
+    """Energia líquida de repouso e número efetivo de repetições por modelo."""
+    cols = {
+        "energy_net_kwh": "Energia líquida mWh (mediana)",
+        "train_repetitions": "Repetições de treino (mediana)",
+        "infer_repetitions": "Repetições de inferência (mediana)",
+        "train_session_s": "Sessão de treino s (mediana)",
+    }
+    present = {c: n for c, n in cols.items() if c in df}
+    if not present:
+        return None
+    out = df.groupby(MODEL)[list(present)].median().rename(columns=present)
+    if "energy_net_kwh" in present:
+        out["Energia líquida mWh (mediana)"] *= KWH_TO_MWH
+        out["Energia líquida < 0 (fração)"] = df.groupby(MODEL)["energy_net_kwh"].apply(
+            lambda s: float((s < 0).mean())
+        )
+    return out
+
+
+def build_report(df: pd.DataFrame, metadata: dict | None = None) -> str:
     lines = ["# Relatório estatístico\n"]
     lines += ["## Estatística descritiva\n", describe(df).round(4).to_markdown(), ""]
 
@@ -96,6 +135,43 @@ def build_report(df: pd.DataFrame) -> str:
             post.round(4).to_markdown(index=False),
             "",
         ]
+
+    energy_text, energy_post = paired_tests(df, ENERGY)
+    lines += [
+        "## Testes de hipótese (energia de treino)\n",
+        "Com IC e WUE constantes, o GMS é função monotônica da energia; o teste "
+        "sobre a energia é o que sustenta diferenças entre modelos.\n",
+        energy_text,
+        "",
+    ]
+    if energy_post is not None:
+        lines += [
+            "Pós-teste: Wilcoxon pareado com correção de Holm\n",
+            energy_post.to_markdown(index=False, floatfmt=".4g"),
+            "",
+        ]
+
+    rel = relative_summary(df)
+    if rel is not None:
+        lines += [
+            f"## Score relativo à referência ({df['reference_model'].iloc[0]})\n",
+            rel.round(4).to_markdown(),
+            "",
+        ]
+    meas = measurement_summary(df)
+    if meas is not None:
+        lines += [
+            "## Medição: energia líquida e repetições\n",
+            meas.round(4).to_markdown(),
+            "",
+        ]
+        if metadata and "idle_baseline" in metadata:
+            ib = metadata["idle_baseline"]
+            lines += [
+                f"- P₀ = {ib['power_w']:.2f} W (repouso de {ib['duration_s']:.0f} s); "
+                f"janela mínima por fase: {metadata.get('min_window_s', '—')} s",
+                "",
+            ]
 
     lines += ["## O GMS carrega informação além de energia e tempo?\n"]
     for label, col in [
@@ -126,6 +202,10 @@ def build_report(df: pd.DataFrame) -> str:
             f"mín {share.min():.1%}, máx {share.max():.1%}",
             "",
         ]
+    if metadata and metadata.get("provenance_warnings"):
+        lines += ["Avisos registrados na execução:\n"]
+        lines += [f"- ⚠ {w}" for w in metadata["provenance_warnings"]]
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -137,10 +217,18 @@ def main() -> None:
     csv_path = args.results_dir / "comparative_results.csv"
     if not csv_path.exists():
         sys.exit(f"Arquivo não encontrado: {csv_path}")
-    report = build_report(pd.read_csv(csv_path))
+    meta_path = args.results_dir / "run_metadata.json"
+    metadata = (
+        json.loads(meta_path.read_text(encoding="utf-8"))
+        if meta_path.exists()
+        else None
+    )
+    report = build_report(pd.read_csv(csv_path), metadata)
     (args.results_dir / "stats_report.md").write_text(report, encoding="utf-8")
     print(report)
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     main()

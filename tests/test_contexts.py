@@ -174,3 +174,49 @@ def test_evaluate_configurations_validates_inputs() -> None:
         evaluate_configurations({"A": 1.0}, [])
     with pytest.raises(ValueError):
         evaluate_configurations({"A": 1.0}, [_ctx("BR", 100.0), _ctx("BR", 200.0)])
+
+
+def test_gms_order_equals_order_of_energy_times_context_factor() -> None:
+    """
+    Proposição (seção 4): com limites globais, GMS = 1 − E·k(contexto, pesos), em que
+    k = w_E/E_max + w_C·PUE·IC/(1000·C_max) + w_W·(WUE + PUE·EWIF)/W_max. Logo, a
+    ordenação pelo GMS é a ordenação de E·k, e o modelo vencedor só muda entre
+    contextos se a razão de energias for menor que a razão dos fatores k.
+    """
+    rng = np.random.default_rng(3)
+    energies = {f"M{i}": float(e) for i, e in enumerate(rng.uniform(1e-6, 1e-4, 5))}
+    ctxs = [
+        _ctx(f"R{i}", float(ic), wue=float(w), ewif=float(f), pue=float(p))
+        for i, (ic, w, f, p) in enumerate(
+            zip(
+                rng.uniform(20, 800, 4),
+                rng.uniform(0, 2, 4),
+                rng.uniform(0.1, 4, 4),
+                rng.uniform(1, 1.6, 4),
+            )
+        )
+    ]
+    w = Weights(0.2, 0.5, 0.3)
+    ev = evaluate_configurations(energies, ctxs, weights=w)
+    cfg = ev.configurations
+    e_max, c_max, w_max = (
+        cfg["energy_kwh"].max(),
+        cfg["carbon_kg"].max(),
+        cfg["water_l"].max(),
+    )
+    by_label = {c.label: c for c in ctxs}
+    k = cfg["context"].map(
+        lambda lab: w.w_E / e_max
+        + w.w_C
+        * by_label[lab].pue
+        * by_label[lab].carbon_intensity_g_per_kwh
+        / 1000
+        / c_max
+        + w.w_W
+        * (
+            by_label[lab].wue_onsite_l_per_kwh
+            + by_label[lab].pue * by_label[lab].offsite_water_l_per_kwh
+        )
+        / w_max
+    )
+    np.testing.assert_allclose(cfg["gms"], 100 * (1 - cfg["energy_kwh"] * k), atol=1e-9)

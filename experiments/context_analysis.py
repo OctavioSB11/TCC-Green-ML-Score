@@ -11,7 +11,9 @@ mediana entre sementes. Grava no diretório de resultados:
   - ``context_configurations.csv``: E, C, W, GMS e rankings de cada configuração;
   - ``context_sensitivity.csv``: τ_b e melhor configuração em cada ponto do simplex;
   - ``context_report.md``: resumo (τ_b de Kendall e fração do simplex em que a
-    seleção difere do critério só-energia).
+    seleção difere do critério só-energia);
+e, em ``docs/Results/<dataset>/<modo>/``, as figuras ``context_gms_heatmap`` e
+``context_simplex`` (τ_b e configuração vencedora em cada ponto do simplex).
 """
 
 from __future__ import annotations
@@ -21,7 +23,13 @@ import os
 import sys
 from pathlib import Path
 
-import pandas as pd
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -57,6 +65,83 @@ def build_report(evaluation: ContextEvaluation, contexts_path: Path) -> str:
     return "\n".join(lines)
 
 
+def _ternary(sens: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+    """Coordenadas no triângulo: vértices E = (0, 0), C = (1, 0), W = (½, √3/2)."""
+    x = sens["w_C"] + sens["w_W"] / 2
+    y = sens["w_W"] * np.sqrt(3) / 2
+    return x.to_numpy(), y.to_numpy()
+
+
+def _triangle(ax: plt.Axes) -> None:
+    h = np.sqrt(3) / 2
+    ax.plot([0, 1, 0.5, 0], [0, 0, h, 0], color="black", lw=1)
+    ax.text(-0.03, -0.04, "w_E = 1", ha="right", va="top", fontsize=9)
+    ax.text(1.03, -0.04, "w_C = 1", ha="left", va="top", fontsize=9)
+    ax.text(0.5, h + 0.03, "w_W = 1", ha="center", va="bottom", fontsize=9)
+    ax.set_xlim(-0.18, 1.18)
+    ax.set_ylim(-0.14, h + 0.12)
+    ax.set_aspect("equal")
+    ax.axis("off")
+
+
+def plot_figures(evaluation: ContextEvaluation, out_dir: Path, title: str) -> None:
+    """Heatmap modelo × contexto, τ_b no simplex e melhor configuração no simplex."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cfg = evaluation.configurations
+
+    # 1. GMS (pesos 1/3) por modelo × contexto
+    grid = cfg.pivot(index="model", columns="context", values="gms")
+    fig, ax = plt.subplots(
+        figsize=(1.2 + 1.1 * grid.shape[1], 1.2 + 0.55 * grid.shape[0])
+    )
+    im = ax.imshow(grid.to_numpy(), cmap="Greens", vmin=0, vmax=100, aspect="auto")
+    ax.set_xticks(range(grid.shape[1]), grid.columns, rotation=30, ha="right")
+    ax.set_yticks(range(grid.shape[0]), grid.index)
+    for (i, j), v in np.ndenumerate(grid.to_numpy()):
+        ax.text(
+            j,
+            i,
+            f"{v:.1f}",
+            ha="center",
+            va="center",
+            fontsize=8,
+            color="white" if v > 60 else "black",
+        )
+    fig.colorbar(im, ax=ax, label="GMS (0–100)")
+    ax.set_title(f"GMS por configuração (pesos 1/3) — {title}", fontsize=10)
+    fig.tight_layout()
+    for ext in ("png", "svg"):
+        fig.savefig(
+            out_dir / f"context_gms_heatmap.{ext}", dpi=300, bbox_inches="tight"
+        )
+    plt.close(fig)
+
+    # 2. τ_b no simplex e 3. melhor configuração no simplex
+    sens = evaluation.sensitivity
+    x, y = _ternary(sens)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.6))
+    sc = ax1.scatter(
+        x, y, c=sens["kendall_tau"], cmap="viridis", vmin=-1, vmax=1, s=40, marker="h"
+    )
+    _triangle(ax1)
+    fig.colorbar(sc, ax=ax1, label="τ_b (GMS × energia)", shrink=0.8, pad=0.06)
+    ax1.set_title("Concordância com o ranking por energia", fontsize=10, pad=14)
+
+    best = sens["best_configuration"].astype("category")
+    cmap = plt.get_cmap("tab10")
+    for k, name in enumerate(best.cat.categories):
+        m = (best == name).to_numpy()
+        ax2.scatter(x[m], y[m], color=cmap(k % 10), s=40, marker="h", label=name)
+    _triangle(ax2)
+    ax2.legend(fontsize=7, loc="upper left", bbox_to_anchor=(0.72, 1.0), frameon=False)
+    ax2.set_title("Configuração de maior GMS", fontsize=10, pad=14)
+    fig.suptitle(f"Sensibilidade aos pesos — {title}", fontweight="bold")
+    fig.tight_layout()
+    for ext in ("png", "svg"):
+        fig.savefig(out_dir / f"context_simplex.{ext}", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[1])
     parser.add_argument("results_dir", type=Path)
@@ -64,6 +149,12 @@ def main() -> None:
         "--contexts", type=Path, default=Path("experiments/contexts/contexts.csv")
     )
     parser.add_argument("--step", type=float, default=0.05, help="Passo do simplex.")
+    parser.add_argument(
+        "--figures",
+        type=Path,
+        default=None,
+        help="Pasta das figuras (padrão: docs/Results/<dataset>/<modo>).",
+    )
     args = parser.parse_args()
 
     csv_path = args.results_dir / "comparative_results.csv"
@@ -82,6 +173,13 @@ def main() -> None:
     )
     report = build_report(evaluation, args.contexts)
     (args.results_dir / "context_report.md").write_text(report, encoding="utf-8")
+    figures = (
+        args.figures
+        or Path("docs/Results") / args.results_dir.parent.name / args.results_dir.name
+    )
+    plot_figures(
+        evaluation, figures, f"{args.results_dir.parent.name} ({args.results_dir.name})"
+    )
     print(report)
 
 

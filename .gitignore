@@ -55,6 +55,7 @@ mlartifacts/
 
 # Execuções de validação (--quick-run); resultados finais continuam versionados
 experiments/results/*/quick_run/
+docs/Results/*/quick_run/
 
 # Dados e modelos versionados fora do git (use DVC)
 data/*
