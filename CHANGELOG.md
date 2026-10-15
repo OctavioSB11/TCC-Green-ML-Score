@@ -5,6 +5,12 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/spec/v2.0.0.html).
 
+## [Não lançado] — preparação da execução completa (semana 3)
+
+### Adicionado
+- `experiments/meter_validation.py`: validação do CodeCarbon com medidor de tomada (fases de repouso e carga; comparação da energia incremental).
+- `docs/execucao_completa.md`: roteiro da execução completa (preparação da máquina, comandos, tempos estimados, critérios de descarte).
+
 ## [Não lançado] — revisão metodológica (semana 2)
 
 ### Adicionado

@@ -21,8 +21,7 @@ experimento em `breast_cancer` executados com *stubs* do CodeCarbon e do MLflow.
 ### Tarefas para o Claude Code (integrante A)
 1. ~~`pip install -e .[dev,experiments]`; `black`, `ruff` e `pytest`~~ — feito (`f721c37`).
 2. ~~Confirmar `final_emissions_data` no CodeCarbon 3.2.6~~ — feito (`docs/ambiente_medicao.md`).
-3. `--quick-run` nos três datasets: feito apenas em `breast_cancer` (14/10);
-   newsgroups e covtype pendentes.
+3. ~~`--quick-run` nos três datasets~~ — feito (14/10).
 4. ~~Registrar o backend de medição da CPU~~ — feito (`84afad6`).
 5. ~~Merge da branch na `main`~~ — feito (`b4ec4fb`).
 
@@ -34,7 +33,7 @@ na semana 4.
 |---|---|
 | Resumo / Abstract | Strubell et al. (2019): 1.438 **lbs** CO₂e (≈ 652 kg), não kg. Remover "resultados parciais" se o texto for a versão final |
 | 3.3 e 4.7 | Remover "dimensões ortogonais"; inserir a demonstração de que, com IC e WUE constantes, GMS = E_norm para quaisquer pesos |
-| 3.5 e 5 | IMDB/sentimentos → 20 Newsgroups, 2 categorias (rec.autos × sci.med), classificação de tópico; 6 → 4 modelos; remover BERT, DistilBERT, LSTM e GPU; hardware real (i5-1235U, Windows 11); CodeCarbon 3.2.6; divisão 80/20 |
+| 3.5 e 5 | IMDB/sentimentos → 20 Newsgroups, 2 categorias (rec.autos × sci.med), classificação de tópico; 6 → 4 modelos; remover BERT, DistilBERT, LSTM e GPU; hardware real (i5-1335U, 16 GB, Windows 11 — ver `docs/ambiente_medicao.md`); CodeCarbon 3.2.6; divisão 80/20 |
 | 5.6 (hipóteses) | Serão reescritas com a nova pergunta (semana 5). Registrar desde já que a H3 original foi refutada (XGBoost teve o menor GMS) |
 | 8.1, Tabela 1 | "μWh" → "mWh" (1,8 × 10⁻⁵ kWh = 18 mWh) |
 | 8.2 | Remover "superioridade estatisticamente comprovada"; com n = 3, testes par a par não têm poder |
@@ -96,8 +95,18 @@ Dados de contexto (integrante B escolhe e cita as fontes): IC por região e por 
 (ONS, Electricity Maps, EEA, EPA eGRID), WUE por provedor (relatórios de
 sustentabilidade) e consumo hídrico por fonte de geração (Macknick et al., 2012).
 
+## Semana 3 (12/10 – 18/10) — preparação concluída em 14/10
+
+| Item | Estado |
+|---|---|
+| Roteiro da execução completa (`docs/execucao_completa.md`) | Feito |
+| Script de validação com medidor (`experiments/meter_validation.py`), com análise da energia incremental ΔE = E_carga − E_repouso | Feito |
+| `--quick-run` em breast_cancer, newsgroups e covtype com CodeCarbon real (14/10, notebook do Danilo) | Feito: os três concluídos sem erro; P₀ entre 15,3 e 16,7 W; a Regressão Logística foi a mais econômica nos três (0,4–0,6 J por treino) |
+| Escolher a máquina de medição | Feito (14/10): notebook do Danilo (i5-1335U); `docs/ambiente_medicao.md` atualizado, com a configuração anterior (i5-1235U do Octávio) como histórico |
+| Preencher `experiments/contexts/contexts.csv` com fontes | **Integrante B** |
+| Validação com o medidor e execução completa (3 datasets) | **Dupla**, seguindo o roteiro |
+
 ## Semanas seguintes
-- Semana 3 (12/10 – 18/10): execução completa pela dupla + validação com o medidor.
 - Semana 4 (19/10 – 25/10): análise, figuras e tabelas.
 - Semana 5 (26/10 – 01/11): reescrita do texto.
 - Folga (02/11 – 08/11): revisão final e entrega.

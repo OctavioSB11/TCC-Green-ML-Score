@@ -41,6 +41,9 @@ python experiments/context_analysis.py experiments/results/newsgroups/full \
 
 Os contextos são lidos de `experiments/contexts/contexts.csv` (ver o README da pasta).
 
+Validação com medidor de tomada e roteiro da execução completa:
+`experiments/meter_validation.py` e `docs/execucao_completa.md`.
+
 ## Como executar
 
 ```bash
