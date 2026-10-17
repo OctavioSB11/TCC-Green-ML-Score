@@ -52,3 +52,21 @@ def fmt_auto(value: float, unit: str = "") -> str:
 def fmt_pct(value: float, decimals: int = 0) -> str:
     """Fração (0 a 1) como porcentagem."""
     return fmt(100 * value, decimals) + "%"
+
+
+def br_table(df, columns: dict[str, tuple[str, int | str]]):
+    """
+    Cópia da tabela só com as colunas pedidas, renomeadas e formatadas como texto com
+    vírgula decimal. ``columns`` mapeia coluna -> (rótulo, casas decimais); use
+    ``"+1"`` para forçar o sinal com uma casa e ``"pct"`` para porcentagem.
+    """
+    out = df[list(columns)].copy()
+    for col, (_, spec) in columns.items():
+        if spec == "pct":
+            out[col] = [fmt_pct(v) for v in out[col]]
+        elif isinstance(spec, str) and spec.startswith("+"):
+            d = int(spec[1:])
+            out[col] = [("+" if v > 0 else "") + fmt(v, d) for v in out[col]]
+        elif isinstance(spec, int):
+            out[col] = [fmt(v, spec) for v in out[col]]
+    return out.rename(columns={c: label for c, (label, _) in columns.items()})

@@ -279,6 +279,68 @@ def _br(value: float, decimals: int) -> str:
     return f"{value:.{decimals}f}".replace(".", ",")
 
 
+def relative_table(summary: pd.DataFrame) -> pd.DataFrame:
+    """
+    Desempenho e custo de cada modelo em relação à Regressão Logística (Tabela 3 do
+    artigo): razão de energia e ΔF1 (medianas por semente), custo marginal em J por
+    ponto de F1, fração de sementes em que o modelo é dominado e se está na fronteira.
+    """
+    cols = {
+        "energy_ratio_ref": "E/E_RL (mediana)",
+        "delta_f1_points": "ΔF1 (pontos, mediana)",
+        "marginal_cost_j": "Custo marginal (J por ponto de F1)",
+        "dominated_share": "Sementes em que é dominado",
+        "pareto": "Na fronteira de Pareto",
+    }
+    present = [c for c in cols if c in summary.columns]
+    out = summary[present].rename(columns=cols)
+    out.index = [model_label(m) for m in out.index]
+    return out
+
+
+def seed_points(dataset: str, mode: str = "full") -> pd.DataFrame:
+    """Uma linha por modelo e semente: energia (mWh), F1 e se a execução foi dominada."""
+    df = load_runs(dataset, mode)
+    out = pd.DataFrame(
+        {
+            "model": df.model_name,
+            "seed": df.seed,
+            "energy_mwh": df.energy_kwh * KWH_TO_MWH,
+            "f1": df.f1_macro,
+        }
+    )
+    if "dominated" in df.columns:
+        out["dominated"] = df.dominated.astype(bool)
+    return out
+
+
+def compare_models(
+    summary: pd.DataFrame,
+    base: str,
+    alternative: str,
+    context: ExecutionContext | None = None,
+) -> dict[str, float | None]:
+    """
+    Quanto custa trocar ``base`` por ``alternative``: ganho de F1 (pontos, pelas
+    médias), razão entre as energias medianas, energia extra por treinamento (J),
+    custo marginal (J por ponto, só quando há ganho de F1) e carbono e água extras
+    no contexto informado.
+    """
+    ctx = context or get_context(REFERENCE_CONTEXT)
+    a, b = summary.loc[base], summary.loc[alternative]
+    gain = 100 * (b.f1_mean - a.f1_mean)
+    extra_kwh = (b.energy_mwh_median - a.energy_mwh_median) / KWH_TO_MWH
+    extra_j = extra_kwh * KWH_TO_J
+    return {
+        "delta_f1_points": gain,
+        "energy_ratio": b.energy_mwh_median / a.energy_mwh_median,
+        "extra_energy_j": extra_j,
+        "marginal_cost_j": extra_j / gain if gain > 0 else None,
+        "extra_carbon_mg": ctx.carbon_kg(extra_kwh) * 1e6,
+        "extra_water_ul": ctx.water_l(extra_kwh) * 1e6,
+    }
+
+
 def decision_table(
     dataset: str, context: ExecutionContext | None = None
 ) -> pd.DataFrame:

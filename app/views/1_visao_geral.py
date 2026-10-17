@@ -142,27 +142,23 @@ with tab_table:
         ]
     ]
     st.dataframe(
-        table,
+        theme.br_table(
+            table,
+            {
+                "f1_mean": ("F1 (média)", 3),
+                "f1_std": ("F1 (desvio)", 3),
+                "energy_mwh_mean": ("Energia mWh (média)", 3),
+                "energy_mwh_std": ("Energia mWh (desvio)", 3),
+                "carbon_mg": ("Carbono (mg CO₂e)", 3),
+                "water_ul": ("Água (µL)", 1),
+                "gms_mean": ("GMS (média)", 1),
+                "gms_std": ("GMS (desvio)", 1),
+                "rank_f1": ("Posição F1", "int"),
+                "rank_energy": ("Posição energia", "int"),
+                "rank_gms": ("Posição GMS", "int"),
+            },
+        ),
         width="stretch",
-        column_config={
-            "f1_mean": st.column_config.NumberColumn("F1 (média)", format="%.3f"),
-            "f1_std": st.column_config.NumberColumn("F1 (desvio)", format="%.3f"),
-            "energy_mwh_mean": st.column_config.NumberColumn(
-                "Energia mWh (média)", format="%.3f"
-            ),
-            "energy_mwh_std": st.column_config.NumberColumn(
-                "Energia mWh (desvio)", format="%.3f"
-            ),
-            "carbon_mg": st.column_config.NumberColumn(
-                "Carbono (mg CO₂e)", format="%.3f"
-            ),
-            "water_ul": st.column_config.NumberColumn("Água (µL)", format="%.1f"),
-            "gms_mean": st.column_config.NumberColumn("GMS (média)", format="%.1f"),
-            "gms_std": st.column_config.NumberColumn("GMS (desvio)", format="%.1f"),
-            "rank_f1": "Posição F1",
-            "rank_energy": "Posição energia",
-            "rank_gms": "Posição GMS",
-        },
     )
     st.download_button(
         "Baixar tabela (CSV)",

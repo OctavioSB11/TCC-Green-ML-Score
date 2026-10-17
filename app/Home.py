@@ -16,7 +16,7 @@ if str(ROOT) not in sys.path:
 
 import streamlit as st  # noqa: E402
 
-from app.core import data, state  # noqa: E402
+from app.core import data, state, theme  # noqa: E402
 
 PAGES_DIR = Path(__file__).resolve().parent / "views"
 
@@ -74,31 +74,18 @@ def inicio() -> None:
             f"contexto {data.REFERENCE_CONTEXT}, local real de medição."
         )
         st.dataframe(
-            contexts[
-                [
-                    "contexto",
-                    "tipo",
-                    "ic_g_kwh",
-                    "pue",
-                    "wue_l_kwh",
-                    "agua_geracao_l_kwh",
-                ]
-            ],
+            theme.br_table(
+                contexts,
+                {
+                    "contexto": ("Contexto", "texto"),
+                    "tipo": ("Tipo", "texto"),
+                    "ic_g_kwh": ("IC (gCO₂e/kWh)", 2),
+                    "pue": ("PUE", 2),
+                    "wue_l_kwh": ("WUE (L/kWh)", 2),
+                    "agua_geracao_l_kwh": ("Água da geração (L/kWh)", 2),
+                },
+            ),
             hide_index=True,
-            column_config={
-                "contexto": "Contexto",
-                "tipo": "Tipo",
-                "ic_g_kwh": st.column_config.NumberColumn(
-                    "IC (gCO₂e/kWh)", format="%.2f"
-                ),
-                "pue": st.column_config.NumberColumn("PUE", format="%.2f"),
-                "wue_l_kwh": st.column_config.NumberColumn(
-                    "WUE (L/kWh)", format="%.2f"
-                ),
-                "agua_geracao_l_kwh": st.column_config.NumberColumn(
-                    "Água da geração (L/kWh)", format="%.2f"
-                ),
-            },
         )
 
 

@@ -67,3 +67,13 @@ def dataset_selector() -> str:
         key=DATASET_KEY,
         help="20 Newsgroups é o estudo de caso principal; os outros dois são a verificação de robustez.",
     )
+
+
+@st.cache_data(show_spinner=False)
+def seeds(dataset: str) -> pd.DataFrame:
+    return data.seed_points(dataset)
+
+
+@st.cache_data(show_spinner=False)
+def relative(dataset: str) -> pd.DataFrame:
+    return data.relative_table(data.model_summary(dataset))

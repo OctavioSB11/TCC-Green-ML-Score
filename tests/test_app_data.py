@@ -140,3 +140,60 @@ def test_overview_findings_reflect_article() -> None:
     assert ng[0] == "O mesmo modelo lidera em F1-Score e em GMS: Regressão Logística."
     assert "239,4 vezes" in ng[1]
     assert any("coincide com o de energia" in f for f in ng)
+
+
+def test_relative_table_matches_article_table3() -> None:
+    ct = data.relative_table(data.model_summary("covtype"))
+    assert ct.loc["XGBoost", "Custo marginal (J por ponto de F1)"] == pytest.approx(
+        1.64, abs=0.01
+    )
+    assert ct.loc[
+        "Random Forest", "Custo marginal (J por ponto de F1)"
+    ] == pytest.approx(9.32, abs=0.01)
+    assert bool(ct.loc["XGBoost", "Na fronteira de Pareto"]) is True
+    assert bool(ct.loc["MLP", "Na fronteira de Pareto"]) is False
+    ng = data.relative_table(data.model_summary("newsgroups"))
+    assert ng.loc["MLP", "Custo marginal (J por ponto de F1)"] == pytest.approx(
+        87.30, abs=0.01
+    )
+
+
+def test_seed_points_have_ten_seeds_per_model() -> None:
+    pts = data.seed_points("covtype")
+    assert len(pts) == 40
+    assert (pts.groupby("model").seed.nunique() == 10).all()
+    assert not pts[pts.model == "XGBoost"].dominated.any()
+    assert pts[pts.model == "MLP_Neural_Network"].dominated.all()
+
+
+def test_compare_models_reproduces_xgboost_trade_off() -> None:
+    s = data.model_summary("covtype")
+    c = data.compare_models(s, "Logistic_Regression", "XGBoost")
+    assert c["delta_f1_points"] == pytest.approx(10.4, abs=0.05)
+    # Cerca de 17 J por treinamento, como no artigo.
+    assert c["extra_energy_j"] == pytest.approx(17.1, abs=0.1)
+    assert c["marginal_cost_j"] == pytest.approx(1.64, abs=0.01)
+    assert c["extra_carbon_mg"] > 0 and c["extra_water_ul"] > 0
+    worse = data.compare_models(s, "XGBoost", "MLP_Neural_Network")
+    assert worse["delta_f1_points"] < 0
+    assert worse["marginal_cost_j"] is None
+
+
+def test_br_table_uses_decimal_comma_and_labels() -> None:
+    from app.core import theme
+
+    s = data.model_summary("covtype")
+    t = theme.br_table(
+        s,
+        {
+            "f1_mean": ("F1", 3),
+            "delta_f1_points": ("ΔF1", "+1"),
+            "dominated_share": ("Dominado", "pct"),
+            "rank_f1": ("Posição", "int"),
+        },
+    )
+    assert list(t.columns) == ["F1", "ΔF1", "Dominado", "Posição"]
+    assert t.loc["Logistic_Regression", "F1"] == "0,759"
+    assert t.loc["XGBoost", "ΔF1"] == "+10,4"
+    assert t.loc["MLP_Neural_Network", "Dominado"] == "100%"
+    assert t.loc["Logistic_Regression", "Posição"] == 4

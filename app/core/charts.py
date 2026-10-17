@@ -124,3 +124,93 @@ def metric_bars(
     _layout(fig, height=300)
     fig.update_layout(margin={"l": 10, "r": 70, "t": 20, "b": 10})
     return fig
+
+
+def pareto_chart(
+    summary: pd.DataFrame,
+    seeds: pd.DataFrame | None = None,
+) -> go.Figure:
+    """
+    F1-Score × energia (escala log): pontos de cada semente, mediana de cada modelo,
+    fronteira de Pareto e, ao passar o mouse, o custo frente à Regressão Logística.
+    """
+    fig = go.Figure()
+    if seeds is not None:
+        for model in summary.index:
+            sub = seeds[seeds.model == model]
+            fig.add_trace(
+                go.Scatter(
+                    x=sub.energy_mwh,
+                    y=sub.f1,
+                    mode="markers",
+                    name=f"{data.model_label(model)} (sementes)",
+                    legendgroup=model,
+                    showlegend=False,
+                    marker={
+                        "color": theme.MODEL_COLORS.get(model, theme.GREY),
+                        "size": 8,
+                        "opacity": 0.35,
+                    },
+                    customdata=sub.seed,
+                    hovertemplate="Semente %{customdata}<br>%{x:.3f} mWh<br>"
+                    "F1 %{y:.3f}<extra>" + data.model_label(model) + "</extra>",
+                )
+            )
+    front = summary[summary.pareto].sort_values("energy_mwh_median")
+    fig.add_trace(
+        go.Scatter(
+            x=front.energy_mwh_median,
+            y=front.f1_mean,
+            mode="lines",
+            line={"color": theme.GREEN_DARK, "width": 2, "dash": "dot", "shape": "hv"},
+            name="Fronteira de Pareto",
+            hoverinfo="skip",
+        )
+    )
+    for model, row in summary.iterrows():
+        is_ref = model == data.REFERENCE_MODEL
+        color = theme.MODEL_COLORS.get(model, theme.GREY)
+        if is_ref:
+            detail = "Referência"
+        else:
+            cost = row.get("marginal_cost_j")
+            detail = (
+                f"E/E_RL: {theme.fmt(row.energy_ratio_ref, 1)} vezes<br>"
+                f"ΔF1: {theme.fmt(row.delta_f1_points, 1)} pontos<br>"
+                + (
+                    f"Custo marginal: {theme.fmt(cost, 2)} J por ponto de F1"
+                    if cost is not None and cost == cost
+                    else "Custo marginal: não se aplica (não supera a RL)"
+                )
+            )
+        status = "na fronteira" if row.pareto else "dominado"
+        fig.add_trace(
+            go.Scatter(
+                x=[row.energy_mwh_median],
+                y=[row.f1_mean],
+                error_y={"type": "data", "array": [row.f1_std], "color": color},
+                mode="markers+text",
+                name=data.model_label(model)
+                + (" (referência)" if is_ref else "")
+                + ("" if row.pareto else " (dominado)"),
+                legendgroup=model,
+                marker={
+                    "color": color if row.pareto else "white",
+                    "symbol": "star" if is_ref else "circle",
+                    "size": 22 if is_ref else 18,
+                    "line": {"color": color, "width": 3},
+                },
+                text=[data.model_label(model)],
+                textposition="top center",
+                hovertemplate=(
+                    f"<b>{data.model_label(model)}</b> ({status})<br>"
+                    f"Energia (mediana): {theme.fmt_auto(row.energy_mwh_median)} mWh<br>"
+                    f"F1 (média): {theme.fmt(row.f1_mean, 3)}<br>{detail}<extra></extra>"
+                ),
+            )
+        )
+    fig.update_xaxes(
+        type="log", title="Energia de treino por execução (mWh, escala log)"
+    )
+    fig.update_yaxes(title="F1-Score macro", tickformat=".2f")
+    return _layout(fig, height=520)

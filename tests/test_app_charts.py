@@ -26,3 +26,16 @@ def test_bar_axis_leaves_room_for_labels() -> None:
     log = charts.metric_bars(summary, "energy_mwh_mean", "Energia", log=True)
     assert log.layout.xaxis.type == "log"
     assert log.layout.xaxis.range[1] > math.log10(summary.energy_mwh_mean.max())
+
+
+def test_pareto_chart_marks_frontier_and_dominated() -> None:
+    summary = data.model_summary("covtype")
+    fig = charts.pareto_chart(summary, data.seed_points("covtype"))
+    names = [t.name for t in fig.data]
+    assert "Fronteira de Pareto" in names
+    assert "MLP (dominado)" in names
+    assert "XGBoost" in names and "Regressão Logística (referência)" in names
+    front = next(t for t in fig.data if t.name == "Fronteira de Pareto")
+    assert len(front.x) == 3  # RL, XGBoost e Random Forest
+    xgb = next(t for t in fig.data if t.name == "XGBoost")
+    assert "1,64 J por ponto de F1" in xgb.hovertemplate
