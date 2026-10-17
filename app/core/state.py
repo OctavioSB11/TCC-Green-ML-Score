@@ -77,3 +77,8 @@ def seeds(dataset: str) -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def relative(dataset: str) -> pd.DataFrame:
     return data.relative_table(data.model_summary(dataset))
+
+
+@st.cache_data(show_spinner=False)
+def simulation(dataset: str, weights: tuple[float, float, float]) -> dict:
+    return data.simulate(dataset, data.make_weights(*weights))

@@ -462,3 +462,75 @@ def profile_summary(dataset: str) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+# ------------------------------------------------------------------ simulador
+def tau_plateau(n_models: int, n_contexts: int) -> float:
+    """
+    τ_b obtido só com o desempate entre contextos de um mesmo modelo, isto é, sem
+    nenhuma inversão entre modelos: √(P_E / P), com P pares e P_E pares não empatados
+    na energia. Com 4 modelos e 7 contextos, vale 0,8819.
+    """
+    n = n_models * n_contexts
+    pairs = n * (n - 1) / 2
+    ties = n_models * n_contexts * (n_contexts - 1) / 2
+    return float(np.sqrt((pairs - ties) / pairs))
+
+
+def simulate(
+    dataset: str,
+    weights: Weights,
+    contexts: Sequence[ExecutionContext] | None = None,
+) -> dict:
+    """
+    Tudo o que o simulador de contexto mostra para um conjunto de pesos.
+
+    Chaves: ``configurations`` (28 linhas ordenadas pelo GMS, com o fator k de cada
+    contexto), ``k`` (fator por contexto), ``tau`` e ``tau_plateau``, ``inversions``
+    (pares em que um modelo mais caro supera um mais econômico), ``best`` (linha da
+    configuração vencedora), ``reference_inversions`` (inversões que superam a
+    Regressão Logística, ordenadas da mais forte para a mais fraca),
+    ``sensitivity`` (simplex de pesos) e ``baseline`` (os mesmos indicadores com
+    pesos iguais).
+    """
+    ctxs = list(contexts or load_contexts())
+    ev = evaluate_context(dataset, weights, ctxs)
+    cfg = ev.configurations.copy()
+    k = k_factors(cfg, ctxs, weights)
+    cfg["k"] = cfg.context.map(k)
+    inv = inversions(cfg)
+    ref_inv = inv[inv.superado == REFERENCE_MODEL].sort_values(
+        ["gms_vencedor", "gms_superado"], ascending=[False, True]
+    )
+    base = evaluate_context(dataset, make_weights(1, 1, 1), ctxs)
+    return {
+        "configurations": cfg.reset_index(drop=True),
+        "k": k.sort_values(),
+        "tau": ev.kendall_tau,
+        "tau_plateau": tau_plateau(cfg.model.nunique(), len(ctxs)),
+        "inversions": inv,
+        "reference_inversions": ref_inv.reset_index(drop=True),
+        "best": cfg.iloc[0],
+        "sensitivity": ev.sensitivity,
+        "baseline": {
+            "tau": base.kendall_tau,
+            "inversions": len(inversions(base.configurations)),
+            "best": base.configurations.iloc[0],
+        },
+    }
+
+
+def map_table(
+    simulation: dict,
+    model: str,
+    contexts: Sequence[ExecutionContext] | None = None,
+) -> pd.DataFrame:
+    """Contextos com coordenadas, fator k e GMS do modelo escolhido, para o mapa."""
+    table = contexts_table(contexts)
+    cfg = simulation["configurations"]
+    gms = cfg[cfg.model == model].set_index("context").gms
+    table["k"] = table.contexto.map(simulation["k"])
+    table["k_rel"] = table.k / table.k.min()
+    table["gms_modelo"] = table.contexto.map(gms)
+    table["melhor"] = table.contexto == simulation["k"].idxmin()
+    return table

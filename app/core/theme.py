@@ -70,3 +70,19 @@ def br_table(df, columns: dict[str, tuple[str, int | str]]):
         elif isinstance(spec, int):
             out[col] = [fmt(v, spec) for v in out[col]]
     return out.rename(columns={c: label for c, (label, _) in columns.items()})
+
+
+def kpi_html(label: str, value: str, sub: str | None = None) -> str:
+    """Cartão de indicador em HTML (sem setas de variação e sem truncar o valor)."""
+    sub_html = (
+        f"<div style='font-size:0.9rem;color:{GREY};margin-top:2px'>{sub}</div>"
+        if sub
+        else ""
+    )
+    return (
+        f"<div style='border:1px solid #DDE6DF;border-radius:10px;padding:10px 14px;"
+        f"background:{GREEN_LIGHT};height:100%'>"
+        f"<div style='font-size:0.9rem;color:{GREY}'>{label}</div>"
+        f"<div style='font-size:1.55rem;font-weight:700;line-height:1.25'>{value}</div>"
+        f"{sub_html}</div>"
+    )

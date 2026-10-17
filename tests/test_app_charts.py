@@ -39,3 +39,20 @@ def test_pareto_chart_marks_frontier_and_dominated() -> None:
     assert len(front.x) == 3  # RL, XGBoost e Random Forest
     xgb = next(t for t in fig.data if t.name == "XGBoost")
     assert "1,64 J por ponto de F1" in xgb.hovertemplate
+
+
+def test_simulator_figures_for_carbon_only_covertype() -> None:
+    w = data.make_weights(0, 1, 0)
+    sim = data.simulate("covtype", w)
+    table = data.map_table(sim, "XGBoost")
+    world = charts.context_map(table, "XGBoost")
+    assert len(world.data[0].lat) == 7
+    assert "star" in list(world.data[0].marker.symbol)
+    heat = charts.gms_heatmap(sim["configurations"], list(sim["k"].index))
+    assert list(heat.data[0].x) == list(sim["k"].index)
+    assert "★" in heat.data[0].text[0][0]  # RL no contexto de menor k
+    tri = charts.simplex_chart(sim["sensitivity"], w)
+    assert tri.data[-1].name == "Pesos atuais"
+    assert len(tri.data) >= 3
+    tau = charts.simplex_chart(sim["sensitivity"], w, color_by="tau")
+    assert len(tau.data) == 2

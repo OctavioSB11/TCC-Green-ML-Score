@@ -197,3 +197,46 @@ def test_br_table_uses_decimal_comma_and_labels() -> None:
     assert t.loc["XGBoost", "ΔF1"] == "+10,4"
     assert t.loc["MLP_Neural_Network", "Dominado"] == "100%"
     assert t.loc["Logistic_Regression", "Posição"] == 4
+
+
+def test_tau_plateau_matches_article() -> None:
+    assert data.tau_plateau(4, 7) == pytest.approx(0.8819, abs=1e-4)
+
+
+def test_simulate_carbon_only_covertype_acceptance() -> None:
+    sim = data.simulate("covtype", data.make_weights(0, 1, 0))
+    assert sim["tau"] == pytest.approx(0.696, abs=1e-3)
+    assert len(sim["inversions"]) == 31
+    top = sim["reference_inversions"].iloc[0]
+    assert (top.vencedor, top.contexto_vencedor) == ("XGBoost", "AWS-Stockholm")
+    assert (top.superado, top.contexto_superado) == ("Logistic_Regression", "IN-local")
+    assert round(top.gms_vencedor, 1) == 99.6
+    assert round(top.gms_superado, 1) == 98.8
+    best = sim["best"]
+    assert (best.model, best.context) == ("Logistic_Regression", "AWS-Stockholm")
+    assert sim["k"].index[0] == "AWS-Stockholm"
+    assert sim["baseline"]["inversions"] == 0
+    assert sim["baseline"]["best"].context == "FR-local"
+
+
+def test_simulate_equal_weights_has_no_reference_inversion() -> None:
+    sim = data.simulate("newsgroups", data.make_weights(1, 1, 1))
+    assert len(sim["inversions"]) == 14
+    assert sim["reference_inversions"].empty
+    assert sim["tau"] == pytest.approx(0.798, abs=1e-3)
+
+
+def test_map_table_has_k_and_model_gms() -> None:
+    sim = data.simulate("covtype", data.make_weights(0, 1, 0))
+    m = data.map_table(sim, "XGBoost").set_index("contexto")
+    assert m.loc["AWS-Stockholm", "melhor"]
+    assert round(m.loc["AWS-Stockholm", "gms_modelo"], 1) == 99.6
+    assert m.k.notna().all()
+
+
+def test_relative_k_range_matches_article_carbon_ratio() -> None:
+    # Só carbono: a pior região tem k 17,4 vezes o da melhor (Índia contra Estocolmo).
+    sim = data.simulate("covtype", data.make_weights(0, 1, 0))
+    m = data.map_table(sim, "Logistic_Regression").set_index("contexto")
+    assert m.k_rel.min() == pytest.approx(1.0)
+    assert m.loc["IN-local", "k_rel"] == pytest.approx(17.4, abs=0.05)

@@ -214,3 +214,200 @@ def pareto_chart(
     )
     fig.update_yaxes(title="F1-Score macro", tickformat=".2f")
     return _layout(fig, height=520)
+
+
+# Escala do fator k: verde (contexto limpo) a vermelho (contexto caro).
+K_SCALE = [[0.0, "#1B7F3B"], [0.5, "#F2C14E"], [1.0, "#B3261E"]]
+
+
+LABEL_POSITION: dict[str, str] = {
+    "AWS-Stockholm": "top center",
+    "FR-local": "middle left",
+    "AWS-Frankfurt": "middle right",
+    "AWS-Virginia": "top center",
+    "IN-local": "top center",
+    "BR-local": "middle left",
+    "AWS-SaoPaulo": "bottom right",
+}
+MAP_CONFIG = {"scrollZoom": False, "displaylogo": False}
+
+
+def context_map(table: pd.DataFrame, model_label: str) -> go.Figure:
+    """
+    Mapa-múndi com os contextos coloridos pelo fator k relativo ao melhor contexto
+    (1 = região de menor k); a melhor região aparece como estrela.
+    """
+    hover = [
+        f"<b>{r.contexto}</b> ({r.tipo})<br>"
+        f"k relativo ao melhor: {theme.fmt(r.k_rel, 2)}<br>"
+        f"GMS de {model_label}: {theme.fmt(r.gms_modelo, 1)}<br>"
+        f"IC: {theme.fmt(r.ic_g_kwh, 1)} gCO₂e/kWh · PUE {theme.fmt(r.pue, 2)}<br>"
+        f"WUE: {theme.fmt(r.wue_l_kwh, 2)} L/kWh · água da geração "
+        f"{theme.fmt(r.agua_geracao_l_kwh, 2)} L/kWh"
+        for r in table.itertuples()
+    ]
+    fig = go.Figure(
+        go.Scattergeo(
+            lat=table.lat,
+            lon=table.lon,
+            text=[
+                f"<b>{c}</b> {theme.fmt(g, 1)}"
+                for c, g in zip(table.contexto, table.gms_modelo)
+            ],
+            mode="markers+text",
+            textposition=[LABEL_POSITION.get(c, "top center") for c in table.contexto],
+            textfont={"size": 13, "color": "#111111"},
+            marker={
+                "size": [28 if b else 18 for b in table.melhor],
+                "color": table.k_rel,
+                "cmin": 1,
+                "colorscale": K_SCALE,
+                "line": {
+                    "color": ["#000000" if b else "#FFFFFF" for b in table.melhor],
+                    "width": 2,
+                },
+                "colorbar": {
+                    "title": {"text": "k relativo<br>ao melhor"},
+                    "thickness": 14,
+                    "tickformat": ".1f",
+                },
+                "symbol": ["star" if b else "circle" for b in table.melhor],
+            },
+            hovertext=hover,
+            hoverinfo="text",
+        )
+    )
+    fig.update_geos(
+        projection_type="equirectangular",
+        showcountries=True,
+        countrycolor="#BBBBBB",
+        showland=True,
+        landcolor="#F3F3EE",
+        showocean=True,
+        oceancolor="#E6F1F7",
+        showframe=False,
+        lataxis_range=[-38, 68],
+        lonaxis_range=[-95, 92],
+    )
+    fig = _layout(fig, height=520)
+    fig.update_layout(margin={"l": 0, "r": 0, "t": 10, "b": 0})
+    return fig
+
+
+def gms_heatmap(configurations: pd.DataFrame, context_order: list[str]) -> go.Figure:
+    """GMS de cada modelo (linhas) em cada contexto (colunas, do menor ao maior k)."""
+    grid = configurations.pivot(index="model", columns="context", values="gms")
+    models = [m for m in data.MODEL_ORDER if m in grid.index]
+    grid = grid.loc[models, context_order]
+    best = configurations.iloc[0]
+    text = [
+        [
+            theme.fmt(v, 1) + (" ★" if (m, c) == (best.model, best.context) else "")
+            for c, v in row.items()
+        ]
+        for m, row in grid.iterrows()
+    ]
+    fig = go.Figure(
+        go.Heatmap(
+            z=grid.to_numpy(),
+            x=context_order,
+            y=[data.model_label(m) for m in models],
+            text=text,
+            texttemplate="%{text}",
+            textfont={"size": 14},
+            colorscale=theme.GMS_SCALE,
+            zmin=0,
+            zmax=100,
+            colorbar={"title": {"text": "GMS"}, "thickness": 14},
+            hovertemplate="%{y} em %{x}<br>GMS %{z:.1f}<extra></extra>",
+        )
+    )
+    fig.update_yaxes(autorange="reversed")
+    return _layout(fig, height=360)
+
+
+def simplex_chart(
+    sensitivity: pd.DataFrame, weights, color_by: str = "vencedor"
+) -> go.Figure:
+    """
+    Triângulo de pesos: cada ponto é uma combinação (w_E, w_C, w_W) do passo de 0,05,
+    colorido pela configuração vencedora ou pelo τ_b; a estrela marca os pesos atuais.
+    """
+    fig = go.Figure()
+    if color_by == "tau":
+        fig.add_trace(
+            go.Scatterternary(
+                a=sensitivity.w_E,
+                b=sensitivity.w_C,
+                c=sensitivity.w_W,
+                mode="markers",
+                marker={
+                    "size": 11,
+                    "symbol": "hexagon",
+                    "color": sensitivity.kendall_tau,
+                    "colorscale": "Viridis",
+                    "colorbar": {"title": {"text": "τ_b"}, "thickness": 14},
+                },
+                hovertemplate="w_E %{a:.2f} · w_C %{b:.2f} · w_W %{c:.2f}<br>"
+                "τ_b %{marker.color:.3f}<extra></extra>",
+                showlegend=False,
+            )
+        )
+    else:
+        palette = [
+            "#1B7F3B",
+            "#1F77B4",
+            "#D62728",
+            "#FF7F0E",
+            "#9467BD",
+            "#8C564B",
+            "#17BECF",
+        ]
+        for i, (name, sub) in enumerate(sensitivity.groupby("best_configuration")):
+            model, context = name.split(" | ")
+            fig.add_trace(
+                go.Scatterternary(
+                    a=sub.w_E,
+                    b=sub.w_C,
+                    c=sub.w_W,
+                    mode="markers",
+                    name=f"{data.model_label(model)} em {context}",
+                    marker={
+                        "size": 11,
+                        "symbol": "hexagon",
+                        "color": palette[i % len(palette)],
+                    },
+                    hovertemplate="w_E %{a:.2f} · w_C %{b:.2f} · w_W %{c:.2f}<extra>"
+                    + f"{data.model_label(model)} em {context}</extra>",
+                )
+            )
+    fig.add_trace(
+        go.Scatterternary(
+            a=[weights.w_E],
+            b=[weights.w_C],
+            c=[weights.w_W],
+            mode="markers",
+            name="Pesos atuais",
+            cliponaxis=False,
+            marker={
+                "size": 22,
+                "symbol": "star",
+                "color": "#000000",
+                "line": {"color": "#FFFFFF", "width": 2},
+            },
+            hovertemplate="Pesos atuais<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        ternary={
+            "aaxis": {"title": {"text": "Energia"}, "min": 0},
+            "baxis": {"title": {"text": "Carbono"}, "min": 0},
+            "caxis": {"title": {"text": "Água"}, "min": 0},
+        }
+    )
+    fig = _layout(fig, height=620)
+    fig.update_layout(
+        margin={"l": 40, "r": 40, "t": 50, "b": 130},
+        legend={"orientation": "h", "yanchor": "top", "y": -0.16, "x": 0},
+    )
+    return fig
