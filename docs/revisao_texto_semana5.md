@@ -55,6 +55,10 @@ demonstração GMS = E_norm (4.3). **Nada pendente desta lista.**
   (item 8.1): H3 mede τ_b abaixo do patamar de desempate entre contextos de um mesmo
   modelo; H4 compara a razão de energia entre modelos competitivos com a razão dos
   fatores contextuais k. Já aplicada à 5.6 (item 4) e aos textos das 8.4 a 8.6 (item 8).
+- **D4. Operacionalização de H2. DECIDIDO (17/10/2026):** como o custo marginal não é
+  definido para a referência (ΔF1 = 0), um modelo dominado é compatível com H2 e um
+  não dominado só o é se E/E_ref ≥ 10 ("uma ordem de grandeza" da redação original).
+  Registrada na 5.6 (item 4) e citada na síntese 8.6 (item 8.4).
 
 ---
 
@@ -262,7 +266,14 @@ técnica e não devem ser citados como evidência.
 > **H2 (retorno decrescente):** os modelos de maior custo computacional não
 > apresentam ganho de F1-Score proporcional ao consumo: nenhum deles integra a
 > fronteira de Pareto entre F1-Score e energia, ou, se a integra, o faz com custo
-> marginal superior ao da referência em ao menos uma ordem de grandeza.
+> marginal superior ao da referência em ao menos uma ordem de grandeza. Como o custo
+> marginal, (E − E_ref) / ΔF1, não é definido para a própria referência, que tem
+> ΔF1 = 0, a comparação com ela é feita pela razão de energia: H2 é testada, em cada
+> dataset e semente, classificando cada modelo alternativo segundo a dominância de
+> Pareto entre F1-Score e energia. Um modelo dominado é compatível com H2; um modelo
+> não dominado só é compatível com H2 se E/E_ref ≥ 10. A hipótese é refutada em um
+> dataset quando algum modelo integra a fronteira com razão de energia mediana
+> inferior a 10.
 >
 > **H3 (contexto e ordenação):** no conjunto de configurações modelo × contexto, há
 > pares de configurações de modelos distintos em que o modelo de maior consumo
@@ -284,6 +295,23 @@ técnica e não devem ser citados como evidência.
 redação anterior ("τ_b < 1" e "a configuração de maior GMS utiliza o modelo de menor
 energia") era verdadeira por construção, pela proposição do item 3.1, e não podia ser
 refutada pelos dados.
+
+**Operacionalização de H2 registrada pela dupla em 17/10/2026 (decisão D4).** A
+redação original comparava o custo marginal do modelo com o "da referência", que não
+existe: com ΔF1 = 0, o quociente (E − E_ref) / ΔF1 não é definido. A regra acima
+substitui essa comparação pela razão de energia E/E_ref, sem alterar o conteúdo da
+hipótese. O limiar de 10 foi escolhido por três motivos: (i) é a tradução literal de
+"uma ordem de grandeza", já presente na redação original, e não um valor ajustado aos
+resultados; (ii) é da mesma ordem que a amplitude das intensidades de carbono entre
+regiões (item 3.1; razão máxima de 17,4 entre os contextos adotados), de modo que um
+modelo dez vezes mais custoso dificilmente é compensado pela escolha da região; (iii)
+depende apenas de uma razão de energias, que a validação pela bateria indica ser
+confiável mesmo quando os valores absolutos não o são. Registra-se, por transparência,
+que a regra foi explicitada após a execução; por isso, reporta-se também sua
+sensibilidade: com as razões medianas, qualquer limiar entre 5,2 e 35,9 produz os
+mesmos vereditos nos três datasets (o XGBoost no Covertype tem E/E_ref mediano de 5,1;
+o modelo não dominado seguinte, o Random Forest no mesmo dataset, 35,9). Por semente,
+a razão do XGBoost no Covertype variou de 3,4 a 9,8, abaixo de 10 em todas as dez.
 
 **Justificativa.** H1 e H2 respondem à dimensão Green AI clássica (custo × qualidade)
 com testes já implementados (`statistical_analysis.py`). H3 e H4 respondem à pergunta
@@ -510,8 +538,10 @@ simplex de pesos (passo 0,05, 231 pontos); por serem determinísticas dada a med
 reportam-se estatísticas descritivas (τ_b, número de pares invertidos, fração do
 simplex) em vez de p-valor. H1 e H2 vêm de `stats_report.md` (Friedman e
 Wilcoxon-Holm sobre a energia de treino; score relativo e dominância de Pareto, D2).
-Em H2, um modelo não dominado é compatível com a hipótese se E/E_ref ≥ 10 (ver
-item 9.0).
+H2 segue a regra registrada na 5.6 (decisão D4): em cada dataset, um modelo dominado
+é compatível com a hipótese, e um não dominado só o é se E/E_ref ≥ 10, porque o
+custo marginal não é definido para a referência (ΔF1 = 0). Os vereditos são os mesmos
+para qualquer limiar entre 5,2 e 35,9.
 
 | Hipótese | 20 Newsgroups (principal) | Breast Cancer (robustez) | Covertype (robustez) |
 |---|---|---|---|
@@ -579,8 +609,8 @@ Este item segue a estrutura do item 6 e incorpora os textos de contexto do item 
    ao da referência em ao menos uma ordem de grandeza", mas a referência não tem custo
    marginal (ΔF1 = 0). A leitura coerente com o protocolo é: um modelo não dominado só
    é compatível com H2 se custar ao menos dez vezes a energia da referência
-   (E/E_ref ≥ 10). Usou-se essa leitura abaixo. **[DECISÃO]** registrar a
-   operacionalização na 5.6 como esclarecimento, sem alterar o conteúdo da hipótese.
+   (E/E_ref ≥ 10). Usou-se essa leitura abaixo. **Registrada na 5.6 em 17/10/2026
+   (decisão D4, item 4), com o limiar justificado e a análise de sensibilidade.**
 3. **O GMS de contexto único põe a LR em 1º no Covertype com 10 pontos de F1 a menos.**
    Isso é coerente com a definição (o GMS é métrica ambiental, não de qualidade), mas
    o texto precisa apresentar o custo marginal (J por ponto de F1) como contraponto,

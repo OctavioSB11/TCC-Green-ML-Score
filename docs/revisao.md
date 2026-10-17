@@ -200,9 +200,17 @@ de F1); H3 confirmada nos três (no Covertype, só com w_E < 0,4); H4 parcialmen
 confirmada, só no Covertype.
 
 Pendente da dupla:
-- **[DECISÃO]** registrar na 5.6 a operacionalização de H2 usada na análise: um
-  modelo não dominado só é compatível com H2 se E/E_ref ≥ 10 (item 9.0).
+- ~~Registrar na 5.6 a operacionalização de H2~~ feito em 17/10 (decisão D4, abaixo).
 - Passar os textos dos itens 4, 5, 8, 9 e 10 para o `.docx`.
+
+- **D4. Operacionalização de H2 (decidido em 17/10/2026):** o custo marginal
+  (E − E_ref) / ΔF1 não é definido para a referência, que tem ΔF1 = 0. H2 é testada
+  pela dominância de Pareto (D2): um modelo dominado é compatível com H2; um não
+  dominado só é compatível se E/E_ref ≥ 10. O limiar traduz "uma ordem de grandeza" da
+  redação original, é da ordem da amplitude de IC entre regiões (17,4) e depende só de
+  razões de energia, que a validação pela bateria indica serem confiáveis. Os
+  vereditos não mudam para limiares entre 5,2 e 35,9. Registrada na 5.6 e citada na
+  8.6 (`revisao_texto_semana5.md`, itens 4 e 8.4).
 - Registrar com o orientador a mudança de objetivo (item 7 de `revisao_texto_semana5.md`).
 
 ## Semanas seguintes
