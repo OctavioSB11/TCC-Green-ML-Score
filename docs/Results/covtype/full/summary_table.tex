@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Resultados no dataset covtype (full): média $\pm$ desvio (acurácia, F1) e mediana [Q1; Q3] (energia, tempo, GMS) sobre 10 semente(s). Energia de treino por execução. Dominado: fração das sementes em que outro modelo tem F1 $\geq$ e energia $\leq$, com ao menos uma desigualdade estrita; J/ponto F1 só é definido com ganho de F1.}
+\label{tab:resultados_covtype_full}
+\begin{tabular}{lccccccccc}
+\toprule
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{F1} & \textbf{Energia (J)} & \textbf{Líquida (J)} & \textbf{Tempo (s)} & \textbf{GMS} & \textbf{$E/E_{ref}$} & \textbf{J/ponto F1} & \textbf{Dominado} \\
+\midrule
+Regressão Logística & 0.7587 $\pm$ 0.0031 & 0.7586 $\pm$ 0.0031 & 3.8 [3.14; 4.14] & 0.917 & 0.162 & 99.2 [99.1; 99.3] & 1 & ref. & 0\% \\
+XGBoost & 0.8624 $\pm$ 0.0041 & 0.8624 $\pm$ 0.0040 & 20.9 [14; 26.2] & 2.95 & 0.991 & 95.5 [94.4; 97.0] & 5.14 & 1.64 & 0\% \\
+Random Forest & 0.8934 $\pm$ 0.0041 & 0.8934 $\pm$ 0.0041 & 132 [95.9; 173] & 3.65 & 7.44 & 71.7 [62.9; 79.4] & 35.9 & 9.32 & 0\% \\
+Rede Neural (MLP) & 0.8506 $\pm$ 0.0055 & 0.8506 $\pm$ 0.0056 & 328 [194; 353] & 24.2 & 17.3 & 29.5 [24.1; 58.4] & 77.9 & 34 & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}

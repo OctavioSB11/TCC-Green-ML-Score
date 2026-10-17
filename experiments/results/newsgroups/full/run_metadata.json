@@ -1,0 +1,82 @@
+{
+  "dataset": "newsgroups",
+  "mode": "full",
+  "seeds": [
+    42,
+    123,
+    2024,
+    7,
+    314,
+    1001,
+    2718,
+    4242,
+    8080,
+    9999
+  ],
+  "repetitions": 10,
+  "n_samples": 1980,
+  "started_utc": "2026-10-16T23:53:39.244218+00:00",
+  "finished_utc": "2026-10-17T00:46:11.088837+00:00",
+  "git_commit": "89c71aa959346ddb2e01182a42add475253ac571",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.13.2",
+  "config": {
+    "CARBON_INTENSITY_SAO_PAULO": 120.0,
+    "CARBON_INTENSITY_US_GRID": 380.0,
+    "WUE_GOOGLE_2024": 0.52,
+    "WUE_INDUSTRY_AVG": 1.8,
+    "SEEDS": [
+      42,
+      123,
+      2024,
+      7,
+      314,
+      1001,
+      2718,
+      4242,
+      8080,
+      9999
+    ],
+    "DATA_SAMPLE_SEED": 42,
+    "WORKLOAD_REPETITIONS": 10,
+    "QUICK_RUN_REPETITIONS": 1,
+    "MIN_MEASUREMENT_WINDOW_S": 30.0,
+    "QUICK_RUN_MIN_WINDOW_S": 5.0,
+    "IDLE_BASELINE_S": 60.0,
+    "QUICK_RUN_IDLE_BASELINE_S": 10.0,
+    "WARMUP": true,
+    "REFERENCE_MODEL": "Logistic_Regression",
+    "N_JOBS": 1,
+    "TEST_SIZE": 0.2,
+    "MAX_TFIDF_FEATURES": 5000,
+    "QUICK_RUN_SAMPLES": 500,
+    "NEWSGROUPS_CATEGORIES": [
+      "rec.autos",
+      "sci.med"
+    ],
+    "AVAILABLE_DATASETS": [
+      "newsgroups",
+      "breast_cancer",
+      "covtype"
+    ],
+    "COVTYPE_N_SAMPLES": 50000,
+    "RESULTS_DIR": "experiments/results",
+    "MLFLOW_EXPERIMENT_NAME": "GreenML_Comparative_Experiment"
+  },
+  "carbon_intensity_g_per_kwh": 120.0,
+  "wue_l_per_kwh": 0.52,
+  "warmup": true,
+  "min_window_s": 30.0,
+  "reference_model": "Logistic_Regression",
+  "idle_baseline": {
+    "power_w": 15.106098518869247,
+    "duration_s": 61.51393660000031,
+    "energy_kwh": 0.0002581209962675226,
+    "tracking_mode": "machine"
+  },
+  "provenance_warnings": [
+    "tracking_mode = machine: a energia inclui todos os processos da máquina, não apenas o processo medido.",
+    "A RAM responde por mais de 50% da energia em 39 de 81 medições (máx. 64%); diferenças entre modelos refletem sobretudo o tempo de execução.",
+    "Potência de RAM constante (10.000 W) em 81 medições: valor estimado pelo CodeCarbon, não medido."
+  ]
+}
