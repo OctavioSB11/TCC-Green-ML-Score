@@ -200,6 +200,7 @@ def model_summary(
     out["rank_f1"] = out.f1_mean.rank(ascending=False, method="min").astype(int)
     out["rank_energy"] = out.energy_mwh_mean.rank(method="min").astype(int)
     out["rank_gms"] = out.gms_mean.rank(ascending=False, method="min").astype(int)
+    out["rank_time"] = out.time_s_mean.rank(method="min").astype(int)
 
     if {"energy_ratio_ref", "delta_f1_points"} <= set(df.columns):
         out["energy_ratio_ref"] = g.energy_ratio_ref.median()
@@ -217,6 +218,65 @@ def model_summary(
         m for m in out.index if m not in MODEL_ORDER
     ]
     return out.loc[order]
+
+
+CRITERIA: dict[str, str] = {
+    "rank_f1": "F1-Score",
+    "rank_time": "Tempo de treino",
+    "rank_energy": "Energia",
+    "rank_gms": "GMS",
+}
+
+
+def ranking_table(summary: pd.DataFrame) -> pd.DataFrame:
+    """Posição de cada modelo (linhas) em cada critério (colunas), de 1 (melhor) a n."""
+    out = summary[list(CRITERIA)].rename(columns=CRITERIA)
+    out.index = [model_label(m) for m in out.index]
+    return out
+
+
+def overview_findings(summary: pd.DataFrame) -> list[str]:
+    """
+    Frases curtas com os principais achados de um dataset, geradas a partir dos dados.
+
+    Compara o líder em F1-Score com o líder em GMS e informa quanto a energia varia
+    entre o modelo mais econômico e o mais caro.
+    """
+    f1_leader = summary.f1_mean.idxmax()
+    gms_leader = summary.gms_mean.idxmax()
+    e = summary.energy_mwh_median
+    spread = e.max() / e.min()
+    findings = []
+    if f1_leader == gms_leader:
+        findings.append(
+            f"O mesmo modelo lidera em F1-Score e em GMS: {model_label(f1_leader)}."
+        )
+    else:
+        row = summary.loc[f1_leader]
+        if gms_leader == REFERENCE_MODEL and "energy_ratio_ref" in summary:
+            ratio, gain = row.energy_ratio_ref, row.delta_f1_points
+        else:
+            ratio = e[f1_leader] / e[gms_leader]
+            gain = 100 * (row.f1_mean - summary.f1_mean[gms_leader])
+        findings.append(
+            f"O modelo mais preciso ({model_label(f1_leader)}) não é o de maior GMS "
+            f"({model_label(gms_leader)}): ganha {_br(gain, 1)} pontos de F1 com "
+            f"{_br(ratio, 1)} vezes a energia."
+        )
+    findings.append(
+        f"A energia de treinamento varia {_br(spread, 1)} vezes entre o modelo mais "
+        f"econômico ({model_label(e.idxmin())}) e o mais caro ({model_label(e.idxmax())})."
+    )
+    if (summary.rank_gms == summary.rank_energy).all():
+        findings.append(
+            "Em contexto único, o ranking do GMS coincide com o de energia, como prevê a "
+            "formulação."
+        )
+    return findings
+
+
+def _br(value: float, decimals: int) -> str:
+    return f"{value:.{decimals}f}".replace(".", ",")
 
 
 def decision_table(

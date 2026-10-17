@@ -97,4 +97,5 @@ biblioteca).
 | Tarefa | Estado |
 |---|---|
 | T1 Fundação | Feita (17/10): `app/Home.py` com navegação e página inicial, `app/views/` (uma página por tarefa; o nome evita a detecção automática de `pages/` pelo Streamlit), `app/core/data.py` (dados sem Streamlit, testável na CI), `app/core/state.py` (cache), `app/core/theme.py`, `.streamlit/config.toml`, extra `app` no `pyproject.toml` e `tests/test_app_data.py` conferindo as Tabelas 2 a 5 e a Figura 4 do artigo |
-| T2 a T8 | Pendentes |
+| T2 Visão geral | Feita (17/10): página `app/views/1_visao_geral.py` com achados gerados dos dados, cartões por modelo (F1, energia, carbono, água e GMS, com selos de referência, fronteira de Pareto e dominância), seletor do contexto para carbono e água, abas de rankings por critério, energia por semente, comparação de métricas e tabela completa com download; `app/core/charts.py` (gráficos Plotly); testes `tests/test_app_charts.py` e novos casos em `tests/test_app_data.py`; CI instalando o extra `app` |
+| T3 a T8 | Pendentes |

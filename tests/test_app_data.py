@@ -119,3 +119,24 @@ def test_labels_match_experiments_labels() -> None:
 
     assert data.DATASET_NAMES == labels.DATASET_NAMES
     assert data.MODEL_NAMES == labels.MODEL_NAMES
+
+
+def test_ranking_table_has_four_criteria_and_matches_table2() -> None:
+    r = data.ranking_table(data.model_summary("covtype"))
+    assert list(r.columns) == ["F1-Score", "Tempo de treino", "Energia", "GMS"]
+    assert r.loc["Regressão Logística"].tolist() == [4, 1, 1, 1]
+    assert r.loc["Random Forest"].tolist() == [1, 3, 3, 3]
+    ng = data.ranking_table(data.model_summary("newsgroups"))
+    assert ng.loc["MLP"].tolist() == [2, 4, 4, 4]
+
+
+def test_overview_findings_reflect_article() -> None:
+    ct = data.overview_findings(data.model_summary("covtype"))
+    assert ct[0] == (
+        "O modelo mais preciso (Random Forest) não é o de maior GMS "
+        "(Regressão Logística): ganha 13,6 pontos de F1 com 35,9 vezes a energia."
+    )
+    ng = data.overview_findings(data.model_summary("newsgroups"))
+    assert ng[0] == "O mesmo modelo lidera em F1-Score e em GMS: Regressão Logística."
+    assert "239,4 vezes" in ng[1]
+    assert any("coincide com o de energia" in f for f in ng)
