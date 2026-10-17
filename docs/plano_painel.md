@@ -26,7 +26,7 @@ biblioteca).
 ## Tarefas
 
 ### T1. Fundação
-- Estrutura: `app/Home.py` (entrada), `app/pages/` (uma página por tela),
+- Estrutura: `app/Home.py` (entrada), `app/views/` (uma página por tela),
   `app/data.py` (leitura e cache dos CSVs e do `contexts.csv`), `app/charts.py`
   (gráficos Plotly reutilizáveis), `app/theme.py` (cores e rótulos, reaproveitando
   `experiments/labels.py`).
@@ -86,8 +86,15 @@ biblioteca).
   (custo marginal do XGBoost), simulador (peso no carbono troca o vencedor).
 - Capturas de tela em alta resolução para os slides, como plano B.
 
-## Decisões pendentes da dupla
-1. T6 (upload) entra ou não?
-2. Paleta: verde do GMS (como nas figuras) ou cores da faculdade?
-3. Só local ou também publicar no Streamlit Community Cloud (o repositório é privado;
-   a publicação exigiria conectar a conta do GitHub)?
+## Decisões (17/10/2026)
+1. T6 (Avalie seu modelo) **entra** no escopo.
+2. Paleta: verde do GMS (#1B7F3B), com alto contraste para projetor; as cores dos
+   modelos são as mesmas das figuras do artigo.
+3. O painel roda **local** (`streamlit run app/Home.py`); publicar no Streamlit
+   Community Cloud fica como opção avaliada na T8.
+
+## Andamento
+| Tarefa | Estado |
+|---|---|
+| T1 Fundação | Feita (17/10): `app/Home.py` com navegação e página inicial, `app/views/` (uma página por tarefa; o nome evita a detecção automática de `pages/` pelo Streamlit), `app/core/data.py` (dados sem Streamlit, testável na CI), `app/core/state.py` (cache), `app/core/theme.py`, `.streamlit/config.toml`, extra `app` no `pyproject.toml` e `tests/test_app_data.py` conferindo as Tabelas 2 a 5 e a Figura 4 do artigo |
+| T2 a T8 | Pendentes |

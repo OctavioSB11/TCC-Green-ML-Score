@@ -1,0 +1,14 @@
+# Tema do GreenML Dashboard: verde do GMS, alto contraste para projetor.
+[theme]
+base = "light"
+primaryColor = "#1B7F3B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#EEF6F0"
+textColor = "#111111"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true
