@@ -183,6 +183,28 @@ Achados principais:
   datasets (no Covertype, só com w_E < 0,4) e H4 parcialmente confirmada só no
   Covertype. O `.docx` ainda não foi alterado.
 
+### Etapa 2: Seção 8 completa e conclusões (17/10/2026), FEITA
+
+| Item | Estado |
+|---|---|
+| H1 e H2 na síntese 8.6 com números reais (Friedman, Wilcoxon-Holm, score relativo, Pareto D2) | Feito (`revisao_texto_semana5.md`, item 8.4) |
+| Texto das Seções 8.1 a 8.6: médias ± desvios das 10 sementes, P₀, dominância, E/E_ref, J por ponto de F1 | Feito (item 9) |
+| 20 Newsgroups: semente 42 anômala e análise de sensibilidade sem ela | Feito: conclusões inalteradas (Friedman χ²_F = 25,93, p = 9,8 × 10⁻⁶; Holm p = 0,023) |
+| Covertype: lentidão a partir da semente 314 (MLP) e 1001 (RF, XGB), de 1,5 a 2 vezes | Verificado nos dados e tratado como limitação |
+| Limitações: validação pela bateria (razão incremental 0,071 ± 0,068), energia líquida negativa, fontes de contexto, falta de IC horária | Feito (itens 5 e 8.5) |
+| Seção 9 (Conclusões) | Feito (item 10) |
+
+Vereditos: H1 confirmada nos três datasets; H2 confirmada no 20 Newsgroups e no Breast
+Cancer e refutada no Covertype (XGBoost na fronteira com 5,1 × E_ref e +10,4 pontos
+de F1); H3 confirmada nos três (no Covertype, só com w_E < 0,4); H4 parcialmente
+confirmada, só no Covertype.
+
+Pendente da dupla:
+- **[DECISÃO]** registrar na 5.6 a operacionalização de H2 usada na análise: um
+  modelo não dominado só é compatível com H2 se E/E_ref ≥ 10 (item 9.0).
+- Passar os textos dos itens 4, 5, 8, 9 e 10 para o `.docx`.
+- Registrar com o orientador a mudança de objetivo (item 7 de `revisao_texto_semana5.md`).
+
 ## Semanas seguintes
 - Semana 5 (26/10 – 01/11): reescrita do texto.
 - Folga (02/11 – 08/11): revisão final e entrega.
