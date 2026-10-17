@@ -16,6 +16,7 @@ PAGES = [
     "app/views/2_qualidade_custo.py",
     "app/views/3_simulador.py",
     "app/views/4_cartao.py",
+    "app/views/5_avalie.py",
 ]
 
 
@@ -60,3 +61,32 @@ def test_simulator_equal_weights_has_no_model_change() -> None:
     assert not at.exception
     assert not at.warning
     assert at.success  # nenhuma inversão no Covertype com pesos iguais
+
+
+def test_evaluate_page_example_shows_results_and_download() -> None:
+    at = _run("app/views/5_avalie.py", "covtype")
+    assert not at.exception
+    assert not at.error
+    assert at.selectbox(key="av_regiao").value == "BR-local"
+    # Exemplo do Covertype: XGBoost com o menor custo marginal frente à RL.
+    assert any(
+        "XGBoost: 1,64 J por ponto de F1" in s.value for s in at.success
+    ), at.success
+    assert len(at.dataframe) == 1
+    assert at.toggle(key="av_estudo").disabled
+
+
+def test_evaluate_page_breast_cancer_example_has_rl_dominating() -> None:
+    at = _run("app/views/5_avalie.py", "breast_cancer")
+    assert not at.exception
+    assert any("Nenhum modelo supera" in w.value for w in at.warning)
+
+
+def test_evaluate_page_waits_for_upload_without_errors() -> None:
+    at = AppTest.from_file(str(ROOT / "app/views/5_avalie.py"), default_timeout=120)
+    at.session_state["dataset"] = "covtype"
+    at.session_state["av_fonte"] = "Enviar meu CSV"
+    at.run()
+    assert not at.exception
+    assert not at.error
+    assert any("Envie um arquivo" in c.value for c in at.caption)

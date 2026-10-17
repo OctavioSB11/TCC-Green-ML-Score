@@ -89,3 +89,31 @@ def card(dataset: str, model: str, context_name: str, profile: str):
     from app.core import card as card_module
 
     return card_module.build_card(dataset, model, context_name, profile)
+
+
+@st.cache_data(show_spinner=False)
+def example_csv(dataset: str) -> bytes:
+    from app.core import upload
+
+    return upload.example_csv(dataset)
+
+
+@st.cache_data(show_spinner=False, max_entries=20)
+def uploaded(raw: bytes, unit: str):
+    from app.core import upload
+
+    return upload.read_upload(raw, unit)
+
+
+@st.cache_data(show_spinner=False, max_entries=50)
+def upload_evaluation(
+    raw: bytes,
+    unit: str,
+    reference: str,
+    context_name: str,
+    weights: tuple[float, float, float],
+):
+    from app.core import upload
+
+    runs = upload.read_upload(raw, unit).runs
+    return upload.evaluate(runs, reference, context_name, data.make_weights(*weights))

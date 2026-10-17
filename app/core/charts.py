@@ -126,14 +126,37 @@ def metric_bars(
     return fig
 
 
+# Cores para modelos fora do estudo (enviados pelo usuário), sem repetir as do artigo.
+EXTRA_COLORS = [
+    "#9467BD",
+    "#8C564B",
+    "#E377C2",
+    "#17BECF",
+    "#BCBD22",
+    "#7F7F7F",
+    "#393B79",
+    "#AD494A",
+]
+
+
+def model_colors(models: list[str]) -> dict[str, str]:
+    """Cor de cada modelo: a do artigo, se houver, ou uma da paleta extra."""
+    extra = iter(EXTRA_COLORS * (len(models) // len(EXTRA_COLORS) + 1))
+    return {m: theme.MODEL_COLORS.get(m) or next(extra) for m in models}
+
+
 def pareto_chart(
     summary: pd.DataFrame,
     seeds: pd.DataFrame | None = None,
+    reference: str = data.REFERENCE_MODEL,
+    reference_short: str = "RL",
 ) -> go.Figure:
     """
     F1-Score × energia (escala log): pontos de cada semente, mediana de cada modelo,
-    fronteira de Pareto e, ao passar o mouse, o custo frente à Regressão Logística.
+    fronteira de Pareto e, ao passar o mouse, o custo frente ao modelo de referência
+    (por padrão, a Regressão Logística).
     """
+    colors = model_colors(list(summary.index))
     fig = go.Figure()
     if seeds is not None:
         for model in summary.index:
@@ -147,7 +170,7 @@ def pareto_chart(
                     legendgroup=model,
                     showlegend=False,
                     marker={
-                        "color": theme.MODEL_COLORS.get(model, theme.GREY),
+                        "color": colors[model],
                         "size": 8,
                         "opacity": 0.35,
                     },
@@ -168,19 +191,19 @@ def pareto_chart(
         )
     )
     for model, row in summary.iterrows():
-        is_ref = model == data.REFERENCE_MODEL
-        color = theme.MODEL_COLORS.get(model, theme.GREY)
+        is_ref = model == reference
+        color = colors[model]
         if is_ref:
             detail = "Referência"
         else:
             cost = row.get("marginal_cost_j")
             detail = (
-                f"E/E_RL: {theme.fmt(row.energy_ratio_ref, 1)} vezes<br>"
+                f"E/E_{reference_short}: {theme.fmt(row.energy_ratio_ref, 1)} vezes<br>"
                 f"ΔF1: {theme.fmt(row.delta_f1_points, 1)} pontos<br>"
                 + (
                     f"Custo marginal: {theme.fmt(cost, 2)} J por ponto de F1"
                     if cost is not None and cost == cost
-                    else "Custo marginal: não se aplica (não supera a RL)"
+                    else "Custo marginal: não se aplica (não supera a referência)"
                 )
             )
         status = "na fronteira" if row.pareto else "dominado"
@@ -214,6 +237,31 @@ def pareto_chart(
     )
     fig.update_yaxes(title="F1-Score macro", tickformat=".2f")
     return _layout(fig, height=520)
+
+
+def add_study_points(fig: go.Figure, summary: pd.DataFrame, dataset: str) -> go.Figure:
+    """Acrescenta ao gráfico de qualidade × custo os modelos de um dataset do estudo."""
+    name = data.dataset_label(dataset)
+    fig.add_trace(
+        go.Scatter(
+            x=summary.energy_mwh_median,
+            y=summary.f1_mean,
+            mode="markers+text",
+            name=f"Modelos do estudo ({name})",
+            marker={
+                "symbol": "diamond-open",
+                "size": 14,
+                "color": theme.GREY,
+                "line": {"width": 2},
+            },
+            text=[data.model_label(m) for m in summary.index],
+            textposition="bottom center",
+            textfont={"color": theme.GREY, "size": 12},
+            hovertemplate="<b>%{text}</b> (estudo, " + name + ")<br>"
+            "Energia (mediana): %{x:.3f} mWh<br>F1 (média): %{y:.3f}<extra></extra>",
+        )
+    )
+    return fig
 
 
 # Escala do fator k: verde (contexto limpo) a vermelho (contexto caro).
@@ -297,7 +345,9 @@ def context_map(table: pd.DataFrame, model_label: str) -> go.Figure:
 def gms_heatmap(configurations: pd.DataFrame, context_order: list[str]) -> go.Figure:
     """GMS de cada modelo (linhas) em cada contexto (colunas, do menor ao maior k)."""
     grid = configurations.pivot(index="model", columns="context", values="gms")
-    models = [m for m in data.MODEL_ORDER if m in grid.index]
+    models = [m for m in data.MODEL_ORDER if m in grid.index] + [
+        m for m in grid.index if m not in data.MODEL_ORDER
+    ]
     grid = grid.loc[models, context_order]
     best = configurations.iloc[0]
     text = [
@@ -323,7 +373,7 @@ def gms_heatmap(configurations: pd.DataFrame, context_order: list[str]) -> go.Fi
         )
     )
     fig.update_yaxes(autorange="reversed")
-    return _layout(fig, height=360)
+    return _layout(fig, height=max(360, 70 * len(models) + 80))
 
 
 def simplex_chart(
