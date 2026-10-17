@@ -15,6 +15,7 @@ PAGES = [
     "app/views/1_visao_geral.py",
     "app/views/2_qualidade_custo.py",
     "app/views/3_simulador.py",
+    "app/views/4_cartao.py",
 ]
 
 

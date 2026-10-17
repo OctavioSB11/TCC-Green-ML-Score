@@ -82,3 +82,10 @@ def relative(dataset: str) -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def simulation(dataset: str, weights: tuple[float, float, float]) -> dict:
     return data.simulate(dataset, data.make_weights(*weights))
+
+
+@st.cache_data(show_spinner=False)
+def card(dataset: str, model: str, context_name: str, profile: str):
+    from app.core import card as card_module
+
+    return card_module.build_card(dataset, model, context_name, profile)
