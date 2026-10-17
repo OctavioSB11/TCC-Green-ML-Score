@@ -103,7 +103,7 @@ sustentabilidade) e consumo hídrico por fonte de geração (Macknick et al., 20
 | Script de validação física sem custo (`experiments/energy_validation.py`): descarga da bateria via WMI; análise da energia incremental ΔE = E_carga − E_repouso | Feito; teste de 60 s funcionou nesta máquina |
 | `--quick-run` em breast_cancer, newsgroups e covtype com CodeCarbon real (14/10, notebook do Danilo) | Feito: os três concluídos sem erro; P₀ entre 15,3 e 16,7 W; a Regressão Logística foi a mais econômica nos três (0,4–0,6 J por treino) |
 | Escolher a máquina de medição | Feito (14/10): notebook do Danilo (i5-1335U); `docs/ambiente_medicao.md` atualizado, com a configuração anterior (i5-1235U do Octávio) como histórico |
-| Preencher `experiments/contexts/contexts.csv` com fontes | **Integrante B** |
+| Preencher `experiments/contexts/contexts.csv` com fontes | Feito em 17/10 (sete contextos; ver Semana 5, etapa 1) |
 | Validação física pela bateria e execução completa (3 datasets) | **Dupla**, seguindo o roteiro |
 
 ## Semana 4 (19/10 – 25/10) — código de análise pronto (14/10)
@@ -147,6 +147,41 @@ Decisões:
   estrita). Justificativa: coerência com a fronteira de Pareto das figuras e porque
   ΔF1 ≤ 0 com menor energia é compromisso, não dominância. A posição em relação à
   referência passa a ser registrada à parte (`position_vs_ref`).
+
+### Etapa 1: análise de contextos, H3 e H4 (17/10/2026)
+
+| Item | Estado |
+|---|---|
+| `contexts.csv` com 7 contextos: BR, FR e IN locais (PUE 1, WUE 0) e AWS São Paulo, Virgínia, Frankfurt e Estocolmo | Feito. IC: Ember 2025; água off-site: Reig et al. (WRI, 2020); PUE/WUE: fichas AWS 2025. Fonte e data de acesso por linha |
+| Valores não confirmados | WUE de AWS Paris e Mumbai; IC horária do SIN (pico e vale). Em `contexts_pendentes.csv`, fora da análise |
+| `run_analysis.py` nos 3 datasets | Feito; figuras `context_gms_heatmap` e `context_simplex` em `docs/Results/<dataset>/full/` |
+| Correção: `generate_results.py` não achava `green_ml_score` fora de instalação editável | Feito (mesmo `sys.path.insert` dos demais scripts) |
+| Interpretação de H3 e H4 e rascunho das Seções 8.4 e 8.5 | `revisao_texto_semana5.md`, item 8 |
+
+Achados principais:
+- τ_b tem patamar de 0,8819 só pelo desempate entre contextos de um mesmo modelo; "τ_b < 1"
+  é verdadeiro por construção. Abaixo do patamar: 20 Newsgroups 0,798 e Breast Cancer
+  0,786 com pesos 1/3 (14 e 16 pares invertidos entre modelos); Covertype fica no
+  patamar (0,882) com pesos 1/3 e cai a 0,696 só com carbono. τ_b decresce com w_E nos
+  três (Spearman 0,87 a 0,96). H3 confirmada no sentido reformulado.
+- A Regressão Logística é a melhor configuração em 100 % do simplex nos três datasets,
+  o que decorre de GMS = 1 − E·k (corolário, não hipótese). A condição
+  E_j/E_i < k_r/k_s foi verificada sem violações em 203.742 comparações.
+- Razão máxima de k entre contextos: 17,4 (só carbono), 8,3 (só água), 1,77 (pesos
+  iguais); carbono e água ordenam os contextos em sentidos quase opostos (Brasil: IC
+  baixa, água off-site de 18,6 L/kWh).
+- Covertype: XGBoost (F1 0,862, 5,49 × energia da LR) supera a LR em outro contexto só
+  com w_C ≥ 0,90 ou w_W ≥ 0,95 (11,3 % do simplex). H4 parcialmente confirmada; nos
+  outros dois datasets a LR domina e H4 não se confirma.
+- **D3. Redação de H3 e H4 (decidido em 17/10/2026):** adotada a redação
+  reformulada (`revisao_texto_semana5.md`, item 8.1). H3: τ_b abaixo do patamar
+  τ_b* = √(P_E/P) de desempate entre contextos de um mesmo modelo, decrescente com
+  w_E. H4: a razão de fatores contextuais k_r/k_s supera a razão de energia entre
+  modelos com F1 distinto. Justificativa: a redação anterior era verdadeira por
+  construção (GMS = 1 − E·k) e não podia ser refutada. Aplicada à 5.6 (item 4) e aos
+  rascunhos das 8.4, 8.5 e 8.6 (item 8), cuja síntese registra H3 confirmada nos três
+  datasets (no Covertype, só com w_E < 0,4) e H4 parcialmente confirmada só no
+  Covertype. O `.docx` ainda não foi alterado.
 
 ## Semanas seguintes
 - Semana 5 (26/10 – 01/11): reescrita do texto.

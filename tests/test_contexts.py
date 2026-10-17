@@ -92,10 +92,11 @@ def test_load_contexts_csv_rejects_duplicates_and_bad_values(tmp_path) -> None:
         load_contexts_csv(bad)
 
 
-def test_template_contexts_file_is_valid_but_empty() -> None:
-    """O CSV versionado tem o cabeçalho correto e nenhum valor inventado."""
-    with pytest.raises(ValueError, match="Nenhum contexto"):
-        load_contexts_csv("experiments/contexts/contexts.csv")
+def test_versioned_contexts_file_is_valid_and_cited() -> None:
+    """O CSV versionado carrega sem erro e toda linha cita a própria fonte."""
+    ctxs = load_contexts_csv("experiments/contexts/contexts.csv")
+    assert ctxs
+    assert all(c.source for c in ctxs)
 
 
 # ---------------------------------------------------------------------------

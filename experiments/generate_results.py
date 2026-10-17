@@ -22,6 +22,7 @@ vêm dos dados. Diretórios iniciados por ``_`` (legado) são ignorados.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -32,6 +33,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from green_ml_score.scoring.relative import pareto_dominated  # noqa: E402
 

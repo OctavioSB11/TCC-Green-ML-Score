@@ -51,6 +51,10 @@ demonstração GMS = E_norm (4.3). **Nada pendente desta lista.**
   das figuras; um modelo menos preciso porém mais econômico não é dominado (é um
   compromisso). Implementado em `pareto_dominated()` (`green_ml_score/scoring/relative.py`).
   Texto no item 3.4.
+- **D3. Redação de H3 e H4. DECIDIDO (17/10/2026):** adotar a redação reformulada
+  (item 8.1): H3 mede τ_b abaixo do patamar de desempate entre contextos de um mesmo
+  modelo; H4 compara a razão de energia entre modelos competitivos com a razão dos
+  fatores contextuais k. Já aplicada à 5.6 (item 4) e aos textos das 8.4 a 8.6 (item 8).
 
 ---
 
@@ -260,25 +264,34 @@ técnica e não devem ser citados como evidência.
 > fronteira de Pareto entre F1-Score e energia, ou, se a integra, o faz com custo
 > marginal superior ao da referência em ao menos uma ordem de grandeza.
 >
-> **H3 (contexto e ordenação):** no conjunto de configurações modelo × contexto, a
-> ordenação pelo GMS diverge da ordenação por energia (τ_b < 1), e a divergência
-> aumenta com o peso atribuído a carbono e água (τ_b decrescente ao longo do simplex
-> no sentido de w_E → 0).
+> **H3 (contexto e ordenação):** no conjunto de configurações modelo × contexto, há
+> pares de configurações de modelos distintos em que o modelo de maior consumo
+> energético obtém GMS superior, isto é, τ_b fica abaixo do valor que se obtém apenas
+> com o desempate entre contextos de um mesmo modelo, τ_b* = √(P_E / P), em que P é o
+> número de pares de configurações e P_E o número de pares não empatados na energia
+> (0,8819 com quatro modelos e sete contextos), e a quantidade desses pares cresce à
+> medida que o peso da energia diminui.
 >
-> **H4 (contexto e seleção):** a configuração de maior GMS utiliza o modelo de menor
-> energia em toda a região do simplex de pesos, exceto quando a razão de energia
-> entre os dois modelos mais econômicos for inferior à razão entre os fatores
-> contextuais k (seção 4.3); nesse caso, a seleção passa a depender da região e do
-> horário de execução.
+> **H4 (contexto e seleção):** para pares de modelos com F1-Score distinto, a razão
+> entre os fatores contextuais de regiões reais (k_r/k_s) supera a razão entre seus
+> consumos energéticos, de modo que a seleção do modelo passa a depender da região e
+> do horário em que cada um seria executado.
 >
 > Registra-se que a versão anterior deste trabalho previa o XGBoost entre os modelos
 > de maior GMS; a execução exploratória (seção 8.1) refutou essa expectativa.
 
+**Redação de H3 e H4 adotada pela dupla em 17/10/2026 (decisão D3, item 8.1).** A
+redação anterior ("τ_b < 1" e "a configuração de maior GMS utiliza o modelo de menor
+energia") era verdadeira por construção, pela proposição do item 3.1, e não podia ser
+refutada pelos dados.
+
 **Justificativa.** H1 e H2 respondem à dimensão Green AI clássica (custo × qualidade)
 com testes já implementados (`statistical_analysis.py`). H3 e H4 respondem à pergunta
-de pesquisa revisada e são diretamente produzidas por `context_analysis.py` (τ_b,
-fração do simplex e configuração vencedora). H4 é refutável: se a seleção mudar sem
-que a condição de razões se verifique, a proposição ou a implementação está errada.
+de pesquisa revisada e são produzidas por `context_analysis.py` (τ_b no simplex e
+configurações) e pela contagem de pares invertidos entre modelos. Ambas são
+refutáveis: H3 falha se τ_b permanecer no patamar τ_b* em todo o simplex; H4 falha se,
+para os modelos competitivos, a razão de energia superar a maior razão de k entre os
+contextos reais em todos os pesos.
 
 ---
 
@@ -322,9 +335,200 @@ Figura `gms_barchart.png`: usar só se necessário, com a nota de que, em contex
 
 ## 7. Pendências que bloqueiam o texto final
 
-1. `experiments/contexts/contexts.csv` preenchido com fontes (integrante B) — sem ele
-   não há H3/H4.
+1. ~~`experiments/contexts/contexts.csv` preenchido com fontes~~ feito em 17/10
+   (sete contextos; resultados no item 8). Pendentes: WUE de AWS Paris e Mumbai e IC
+   horária do SIN (`experiments/contexts/contexts_pendentes.csv`).
 2. Validação pela bateria (≈ 1 h) e execução completa (≈ 4–6 h), conforme
    `docs/execucao_completa.md`.
 3. ~~Decisões D1 e D2~~ — ambas decididas em 15/10.
 4. Registrar por escrito, com o orientador, a mudança de objetivo (item 2).
+
+---
+
+## 8. Contextos de execução: resultados de H3 e H4 (rascunho das 8.4, 8.5 e 8.6)
+
+Base: `contexts.csv` de 17/10/2026 (sete contextos), energia de treinamento mediana
+das dez sementes e `python experiments/run_analysis.py`. Artefatos por dataset:
+`experiments/results/<dataset>/full/context_report.md`,
+`context_configurations.csv`, `context_sensitivity.csv` e as figuras
+`docs/Results/<dataset>/full/context_gms_heatmap.png` e `context_simplex.png`.
+
+### 8.1 Avaliação crítica do orientador
+
+1. **A primeira parte de H3 é verdadeira por construção.** O ranking por energia
+   empata os sete contextos de um mesmo modelo (a energia de TI não depende da região),
+   e o GMS desempata sempre que w_E < 1. Mesmo sem nenhuma inversão entre modelos,
+   τ_b = √(294/378) = 0,8819 (28 configurações, 378 pares, 84 empatados na energia).
+   Portanto "τ_b < 1" não testa nada; a quantidade informativa é τ_b **abaixo** desse
+   patamar, isto é, a existência de pares discordantes entre modelos diferentes.
+2. **H4, na redação atual, é corolário, não hipótese.** Como GMS_ir = 1 − E_i · k_r, a
+   configuração de maior GMS é sempre (modelo de menor energia, contexto de menor k),
+   quaisquer que sejam os fatores. Os dados confirmam (Regressão Logística em 100 % do
+   simplex nos três datasets), mas não poderiam refutar. A verificação da condição
+   E_j/E_i < k_r/k_s em todos os pares e pesos (294 pares × 231 pontos × 3 datasets,
+   203.742 comparações, zero violações) atesta a implementação, não um fenômeno.
+3. **O conteúdo empírico está na comparação de razões.** A pergunta refutável é se as
+   razões de fatores entre contextos reais superam as razões de energia entre modelos
+   competitivos. Com os contextos adotados, a razão máxima de k é 17,4 (só carbono,
+   Índia local / AWS Estocolmo), 8,3 (só água, AWS São Paulo / AWS Frankfurt) e apenas
+   1,77 com pesos iguais. A combinação reduz a amplitude porque carbono e água ordenam
+   os contextos em sentidos quase opostos (os contextos brasileiros têm a 3ª e a 4ª
+   menor IC e a maior água off-site, 18,6 L/kWh, por evaporação em reservatórios).
+4. **Assimetria local × nuvem.** Os contextos locais têm PUE = 1 e WUE = 0 por
+   definição, o que os favorece; FR-local vence em 78 % do simplex por isso. O texto
+   deve apresentar os dois grupos separadamente ou declarar essa vantagem.
+5. **Artefato no vértice w_E = 1.** Ali todos os contextos empatam; o "vencedor"
+   BR-local da figura do simplex é apenas o primeiro da lista. Mencionar na legenda.
+
+**Redação de H3 e H4 adotada em 17/10/2026 (decisão D3; já aplicada à 5.6, item 4):**
+
+> **H3 (contexto e ordenação):** no conjunto de configurações modelo × contexto, há
+> pares de configurações de modelos distintos em que o modelo de maior consumo
+> energético obtém GMS superior, isto é, τ_b fica abaixo do valor que se obtém apenas
+> com o desempate entre contextos de um mesmo modelo, τ_b* = √(P_E / P), em que P é o
+> número de pares de configurações e P_E o número de pares não empatados na energia
+> (0,8819 com quatro modelos e sete contextos), e a quantidade desses pares cresce à
+> medida que o peso da energia diminui.
+>
+> **H4 (contexto e seleção):** para pares de modelos com F1-Score distinto, a razão
+> entre os fatores contextuais de regiões reais (k_r/k_s) supera a razão entre seus
+> consumos energéticos, de modo que a seleção do modelo passa a depender da região e
+> do horário em que cada um seria executado.
+
+### 8.2 Resultados por dataset
+
+Energia mediana de treinamento (mWh) / F1 macro mediano:
+
+| Dataset | LR | RF | XGB | MLP |
+|---|---|---|---|---|
+| 20 Newsgroups | 0,103 / 0,936 | 9,58 / 0,899 | 20,2 / 0,867 | 24,7 / 0,934 |
+| Breast Cancer | 0,018 / 0,967 | 0,873 / 0,953 | 0,772 / 0,958 | 0,307 / 0,929 |
+| Covertype | 1,05 / 0,759 | 36,6 / 0,893 | 5,79 / 0,862 | 91,2 / 0,850 |
+
+| Indicador | 20 Newsgroups | Breast Cancer | Covertype |
+|---|---|---|---|
+| τ_b com pesos 1/3 | 0,798 | 0,786 | 0,882 (= patamar) |
+| τ_b no simplex: mín / mediana | 0,582 / 0,786 | 0,576 / 0,780 | 0,696 / 0,882 |
+| τ_b só carbono / só água | 0,582 / 0,642 | 0,576 / 0,648 | 0,696 / 0,756 |
+| Spearman (w_E, τ_b) | 0,955 | 0,939 | 0,874 |
+| Pares invertidos entre modelos, pesos 1/3 | 14 | 16 | 0 |
+| Fração do simplex com ao menos uma inversão | 92,2 % | 96,1 % | 45,0 % |
+| Melhor configuração | LR em 100 % do simplex | LR em 100 % | LR em 100 % |
+| Menor razão de energia contra a LR | 92,9 (RF) | 17,1 (MLP) | 5,49 (XGB) |
+| A LR é superada em algum par? | nunca | só no vértice w_C = 1 (0,4 %) | sim, em 11,3 % do simplex (XGB) |
+
+**H3.** Confirmada nos três datasets, na redação adotada (D3): τ_b cai abaixo do patamar
+de 0,8819 e decresce monotonicamente com o peso da energia (Spearman de 0,87 a 0,96),
+com o mínimo no vértice só carbono. A intensidade do efeito depende das razões de
+energia entre modelos adjacentes: no 20 Newsgroups (MLP/XGB = 1,22) e no Breast Cancer
+(RF/XGB = 1,13) há inversões já com pesos iguais; no Covertype, cujas razões adjacentes
+são maiores (5,49; 6,31; 2,49), τ_b permanece no patamar para w_E ≥ 0,4 e só cai quando
+carbono e água dominam.
+
+**H4.** No 20 Newsgroups e no Breast Cancer, a Regressão Logística é simultaneamente o
+modelo mais econômico e o de maior F1; nenhum contexto a supera (no Breast Cancer, a
+MLP só a ultrapassa no vértice só carbono, porque 17,11 < 17,40). As inversões ocorrem
+entre modelos já dominados, sem consequência prática para a seleção: H4 não se
+confirma nesses dois datasets. No **Covertype** há compromisso real: o XGBoost ganha
+10,4 pontos de F1 sobre a LR com 5,49 vezes a energia, e o Random Forest ganha 13,5
+pontos com 34,7 vezes. A condição de razões é satisfeita para XGB × LR apenas quando
+w_C ≥ 0,90 no eixo energia-carbono (ou w_W ≥ 0,95 no eixo energia-água), isto é, em
+11,3 % do simplex. Em carbono: o XGBoost treinado em AWS Estocolmo emite 0,223 mg CO2e
+por treinamento, contra 0,707 mg da LR na rede indiana; o Random Forest em Estocolmo
+(1,41 mg) emite menos que o XGBoost na Índia (3,88 mg), pois 6,31 < 17,4. Em água, a
+ordem se inverte: o XGBoost em Estocolmo consome 38 µL, contra 3,6 µL da LR na Índia.
+H4 é, portanto, parcialmente confirmada: o contexto pode alterar a seleção somente
+quando a diferença de energia entre modelos competitivos é inferior a cerca de uma
+ordem de grandeza e quando o critério privilegia um único recurso (carbono ou água);
+com pesos equilibrados (razão máxima de k = 1,77), a seleção não muda em nenhum
+dataset.
+
+**Escolha da região (mesmo modelo).** O contexto vencedor depende dos pesos: FR-local
+em 78,4 % do simplex, AWS Estocolmo ao longo do eixo energia-carbono (8,7 %) e AWS
+Frankfurt junto ao eixo energia-água (12,6 %). Esse é o efeito do contexto mais
+robusto do estudo e independe do dataset, pois decorre só de k_r.
+
+### 8.3 Proposta de texto para as Seções 8.4 (20 Newsgroups) e 8.5 (robustez)
+
+> A avaliação contextualizada considerou sete contextos de execução: o próprio
+> equipamento de medição conectado às redes do Brasil, da França e da Índia (PUE
+> unitário e sem consumo hídrico local) e quatro regiões de nuvem com PUE e WUE
+> publicados pelo provedor para 2025 (São Paulo, Virgínia do Norte, Frankfurt e
+> Estocolmo). As intensidades de carbono provêm da Ember (2025) e os fatores hídricos
+> de geração, de Reig et al. (2020). Entre esses contextos, o fator de carbono varia
+> 17,4 vezes e o fator hídrico, 8,3 vezes, em sentidos quase opostos: os contextos
+> brasileiros estão entre os de menor intensidade de carbono e são os de maior consumo
+> hídrico por kWh.
+>
+> No 20 Newsgroups, a concordância entre o ranking do GMS e o ranking energético foi
+> τ_b = 0,798 com pesos iguais, abaixo do valor de 0,882 atribuível apenas ao desempate
+> entre contextos de um mesmo modelo, e caiu para 0,582 quando todo o peso recaiu
+> sobre o carbono, o que confirma H3: há pares de configurações em que o modelo de
+> maior consumo obtém GMS superior, e seu número cresce à medida que o peso da
+> energia diminui (correlação de Spearman entre w_E e τ_b de 0,955). As inversões,
+> contudo, envolveram apenas modelos de consumo próximo
+> e desempenho inferior ao da referência (MLP e XGBoost, razão de energia de 1,22); a
+> Regressão Logística, 93 vezes mais econômica que o modelo seguinte, permaneceu na
+> configuração de maior GMS em todo o simplex de pesos. Como a razão de energia entre
+> a referência e qualquer modelo alternativo (no mínimo 92,9) supera a maior razão
+> entre fatores contextuais (17,4), H4 não se confirma neste conjunto. Resultado
+> análogo foi observado no Breast Cancer Wisconsin (τ_b = 0,786 com pesos iguais;
+> razão mínima de energia de 17,1, superada apenas no vértice de peso exclusivo no
+> carbono, em que a razão de k é 17,4).
+>
+> O Covertype foi o único conjunto com compromisso efetivo entre qualidade preditiva e
+> consumo: o XGBoost elevou o F1-Score de 0,759 para 0,862 com 5,5 vezes a energia da
+> Regressão Logística. Nesse caso, o treinamento do XGBoost em Estocolmo emitiu cerca
+> de um terço do carbono do treinamento da Regressão Logística na rede indiana, de modo
+> que, sob critério exclusivamente de carbono, a escolha do modelo passa a depender de
+> onde cada um é executado. Com pesos equilibrados, entretanto, a razão máxima entre
+> fatores contextuais foi de 1,77, insuficiente para alterar a seleção, e τ_b
+> permaneceu no patamar de 0,882; a condição de H4 só se verificou com peso do
+> carbono de ao menos 0,90 ou peso da água de ao menos 0,95 (11,3 % do simplex).
+> H3 confirmou-se também neste conjunto, porém apenas com w_E < 0,4 (mínimo de
+> 0,696 no vértice do carbono), e H4 confirmou-se parcialmente. Conclui-se que
+> o contexto de execução altera de forma robusta a escolha da região para um mesmo
+> modelo, mas só altera a escolha do modelo quando as diferenças de consumo entre
+> alternativas competitivas são inferiores à amplitude dos fatores contextuais, o que,
+> neste estudo, ocorreu apenas no Covertype e sob ponderações extremas.
+
+**Justificativa acadêmica.** A reformulação separa o que é consequência matemática
+(desempate entre contextos, vencedor global) do que depende dos dados (razões de
+energia entre modelos competitivos frente às razões de fatores de regiões reais). A
+banca tende a perguntar por que τ_b < 1 "confirma" algo; o patamar de 0,8819 responde
+de antemão. O Covertype passa a ser a evidência central de H4, e os outros dois
+datasets mostram o caso, igualmente informativo, em que a referência domina.
+
+### 8.4 Proposta para a Seção 8.6 (síntese das hipóteses)
+
+H3 e H4 são avaliadas sobre as energias medianas das dez sementes e sobre todo o
+simplex de pesos (passo 0,05, 231 pontos); por serem determinísticas dada a mediana,
+reportam-se estatísticas descritivas (τ_b, número de pares invertidos, fração do
+simplex) em vez de p-valor. H1 e H2 vêm de `stats_report.md` (Friedman/Wilcoxon-Holm
+e Pareto) e devem ser preenchidas pela dupla.
+
+| Hipótese | 20 Newsgroups (principal) | Breast Cancer (robustez) | Covertype (robustez) |
+|---|---|---|---|
+| H1 | [preencher: Friedman e Wilcoxon-Holm] | [preencher] | [preencher] |
+| H2 | [preencher: fronteira e custo marginal] | [preencher] | [preencher] |
+| H3 | Confirmada: τ_b = 0,798 com pesos iguais (patamar 0,882); mín. 0,582; 14 pares invertidos; Spearman(w_E, τ_b) = 0,955 | Confirmada: τ_b = 0,786; mín. 0,576; 16 pares; Spearman 0,939 | Confirmada só com w_E < 0,4: τ_b = 0,882 (no patamar) com pesos iguais; mín. 0,696; Spearman 0,874 |
+| H4 | Não confirmada: razão mínima de energia contra a LR de 92,9, acima da razão máxima de k (17,4); LR melhor em 100 % do simplex | Não confirmada: razão de 17,1 superada só no vértice w_C = 1 (0,4 % do simplex) | Parcialmente confirmada: XGB (F1 0,862, 5,49 × E) supera a LR de outro contexto em 11,3 % do simplex (w_C ≥ 0,90 ou w_W ≥ 0,95); nunca com pesos iguais (razão de k = 1,77) |
+
+> Em síntese, a contextualização por região alterou a ordenação das configurações
+> nos três conjuntos de dados (H3), mas alterou a seleção do modelo apenas no
+> Covertype, único caso com compromisso efetivo entre F1-Score e consumo, e apenas sob
+> ponderações concentradas em carbono ou em água (H4, parcial). A escolha da região
+> para um mesmo modelo, por sua vez, dependeu dos pesos em todos os casos.
+
+### 8.5 Limitações específicas desta análise
+
+- A energia é a de treinamento (mediana de dez sementes); a inferência não entra no
+  GMS contextual.
+- Os contextos locais de França e Índia são contrafactuais (o mesmo equipamento ligado
+  a outra rede). AWS Paris e Mumbai ficaram de fora por falta de WUE publicado.
+- A IC é média anual de 2025, baseada na geração; não considera importações entre
+  regiões (relevante para a Virgínia, integrada à PJM) nem variação horária.
+- O fator hídrico off-site do Brasil é dominado pela evaporação de reservatórios,
+  cuja atribuição integral à geração é discutida na literatura (Macknick et al.,
+  2012); recomenda-se registrar essa ressalva.
+- Não há contexto horário: falta IC horária oficial do SIN (ver pendências).
