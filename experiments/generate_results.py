@@ -36,12 +36,19 @@ import pandas as pd  # noqa: E402
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from experiments.labels import (  # noqa: E402
+    comma,
+    comma_formatter,
+    figure_title,
+    model_name,
+)
 from green_ml_score.scoring.relative import pareto_dominated  # noqa: E402
 
 RESULTS_DIR = Path("experiments/results")
 FIGURES_DIR = Path("docs/Results")
 KWH_TO_J: float = 3.6e6
 KWH_TO_MWH: float = 1e6
+J_TO_MWH: float = 1 / 3.6
 
 plt.rcParams.update(
     {
@@ -63,16 +70,10 @@ PALETTE: dict[str, str] = {
     "MLP_Neural_Network": "#ff7f0e",
     "XGBoost": "#d62728",
 }
-FRIENDLY_NAMES: dict[str, str] = {
-    "Logistic_Regression": "Regressão Logística",
-    "Random_Forest": "Random Forest",
-    "MLP_Neural_Network": "Rede Neural (MLP)",
-    "XGBoost": "XGBoost",
-}
 
 
 def _name(model: str) -> str:
-    return FRIENDLY_NAMES.get(model, model)
+    return model_name(model)
 
 
 def _color(model: str) -> str:
@@ -166,16 +167,17 @@ def plot_energy_time(agg: pd.DataFrame, out_dir: Path, title: str) -> None:
 
     ax1.bar(
         x - (w / 2 if has_net else 0),
-        agg["energy_j_median"],
+        agg["energy_j_median"] * J_TO_MWH,
         w,
-        yerr=_err(agg["energy_j_median"], agg["energy_j_q1"], agg["energy_j_q3"]),
+        yerr=_err(agg["energy_j_median"], agg["energy_j_q1"], agg["energy_j_q3"])
+        * J_TO_MWH,
         color=colors,
         edgecolor="black",
         capsize=4,
         label="bruta",
     )
     if has_net:
-        net = agg["energy_net_j_median"]
+        net = agg["energy_net_j_median"] * J_TO_MWH
         positive = net > 0
         ax1.bar(
             x[positive] + w / 2,
@@ -189,8 +191,8 @@ def plot_energy_time(agg: pd.DataFrame, out_dir: Path, title: str) -> None:
         )
         for xi, v in zip(x[~positive], net[~positive]):
             ax1.annotate(
-                f"líq. {v:.2g} J",
-                (xi + w / 2, agg["energy_j_median"].min()),
+                f"líq. {comma(v, 3)} mWh",
+                (xi + w / 2, agg["energy_j_median"].min() * J_TO_MWH),
                 ha="center",
                 va="bottom",
                 fontsize=7,
@@ -199,7 +201,7 @@ def plot_energy_time(agg: pd.DataFrame, out_dir: Path, title: str) -> None:
         ax1.legend(fontsize=8)
     ax1.set_yscale("log")
     ax1.set_xticks(x, labels, rotation=20, ha="right")
-    ax1.set_ylabel("Energia de treino por execução (J, escala log)")
+    ax1.set_ylabel("Energia de treino por execução (mWh, escala log)")
     ax1.set_title("Energia (mediana; barras: IQR)")
 
     ax2.bar(
@@ -226,13 +228,14 @@ def plot_pareto(agg: pd.DataFrame, out_dir: Path, title: str) -> None:
     front = pareto_front(agg["energy_j_median"].to_numpy(), agg["f1_mean"].to_numpy())
     for i, r in agg.iterrows():
         ax.errorbar(
-            r["energy_j_median"],
+            r["energy_j_median"] * J_TO_MWH,
             r["f1_mean"],
             xerr=_err(
                 pd.Series([r["energy_j_median"]]),
                 pd.Series([r["energy_j_q1"]]),
                 pd.Series([r["energy_j_q3"]]),
-            ),
+            )
+            * J_TO_MWH,
             yerr=0 if np.isnan(r["f1_std"]) else r["f1_std"],
             fmt="*" if r.get("is_reference", False) else "o",
             markersize=14 if r.get("is_reference", False) else 9,
@@ -241,12 +244,12 @@ def plot_pareto(agg: pd.DataFrame, out_dir: Path, title: str) -> None:
             capsize=4,
             label=_name(r["model"])
             + (" (referência)" if r.get("is_reference", False) else "")
-            + ("" if front[i] else " — dominado"),
+            + ("" if front[i] else " (dominado)"),
             zorder=3,
         )
     pts = agg.loc[front].sort_values("energy_j_median")
     ax.step(
-        pts["energy_j_median"],
+        pts["energy_j_median"] * J_TO_MWH,
         pts["f1_mean"],
         where="post",
         color="gray",
@@ -255,8 +258,9 @@ def plot_pareto(agg: pd.DataFrame, out_dir: Path, title: str) -> None:
         zorder=2,
     )
     ax.set_xscale("log")
-    ax.set_xlabel("Energia de treino por execução (J, mediana, escala log)")
-    ax.set_ylabel("F1 macro (média ± desvio)")
+    ax.set_xlabel("Energia de treino por execução (mWh, mediana, escala log)")
+    ax.set_ylabel("F1-Score macro (média ± desvio)")
+    ax.yaxis.set_major_formatter(comma_formatter(2))
     ax.set_title(title)
     ax.legend(
         fontsize=8,
@@ -402,7 +406,7 @@ def readme(agg: pd.DataFrame, dataset: str, mode: str) -> str:
         if c in show
     ]
     return (
-        f"# Resultados — {dataset} ({mode})\n\n"
+        f"# Resultados: {dataset} ({mode})\n\n"
         "Gerado por `experiments/generate_results.py` a partir de "
         "`comparative_results.csv`. Energia de treino por execução.\n\n"
         + show[keep].to_markdown(index=False, floatfmt=".4g")
@@ -429,10 +433,10 @@ def process(results_dir: Path, figures_dir: Path) -> None:
 
     agg = aggregate(df)
     n = int(agg["n"].max())
-    title = f"{dataset} ({mode}, {n} semente{'s' if n > 1 else ''})"
+    title = figure_title(dataset, mode, f"{n} semente{'s' if n > 1 else ''}")
     plot_energy_time(agg, figures_dir, title)
-    plot_pareto(agg, figures_dir, f"F1 × energia — {title}")
-    plot_gms(agg, figures_dir, f"GreenML Score — {title}")
+    plot_pareto(agg, figures_dir, f"F1-Score × energia: {title}")
+    plot_gms(agg, figures_dir, f"GreenML Score: {title}")
     (figures_dir / "summary_table.tex").write_text(
         latex_table(agg, dataset, mode), encoding="utf-8"
     )

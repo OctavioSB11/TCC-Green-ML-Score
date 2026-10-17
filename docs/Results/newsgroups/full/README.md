@@ -1,4 +1,4 @@
-# Resultados — newsgroups (full)
+# Resultados: newsgroups (full)
 
 Gerado por `experiments/generate_results.py` a partir de `comparative_results.csv`. Energia de treino por execução.
 

@@ -1,4 +1,4 @@
-# Resultados — breast_cancer (full)
+# Resultados: breast_cancer (full)
 
 Gerado por `experiments/generate_results.py` a partir de `comparative_results.csv`. Energia de treino por execução.
 

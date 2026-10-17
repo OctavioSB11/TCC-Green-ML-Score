@@ -33,6 +33,12 @@ import pandas as pd  # noqa: E402
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from experiments.labels import (  # noqa: E402
+    comma,
+    comma_formatter,
+    figure_title,
+    model_name,
+)
 from green_ml_score.contexts import (  # noqa: E402
     ContextEvaluation,
     evaluate_configurations,
@@ -91,6 +97,7 @@ def plot_figures(evaluation: ContextEvaluation, out_dir: Path, title: str) -> No
 
     # 1. GMS (pesos 1/3) por modelo × contexto
     grid = cfg.pivot(index="model", columns="context", values="gms")
+    grid.index = [model_name(m) for m in grid.index]
     fig, ax = plt.subplots(
         figsize=(1.2 + 1.1 * grid.shape[1], 1.2 + 0.55 * grid.shape[0])
     )
@@ -101,14 +108,14 @@ def plot_figures(evaluation: ContextEvaluation, out_dir: Path, title: str) -> No
         ax.text(
             j,
             i,
-            f"{v:.1f}",
+            comma(v, 1),
             ha="center",
             va="center",
             fontsize=8,
             color="white" if v > 60 else "black",
         )
     fig.colorbar(im, ax=ax, label="GMS (0–100)")
-    ax.set_title(f"GMS por configuração (pesos 1/3) — {title}", fontsize=10)
+    ax.set_title(f"GMS por configuração (pesos iguais): {title}", fontsize=10)
     fig.tight_layout()
     for ext in ("png", "svg"):
         fig.savefig(
@@ -124,10 +131,15 @@ def plot_figures(evaluation: ContextEvaluation, out_dir: Path, title: str) -> No
         x, y, c=sens["kendall_tau"], cmap="viridis", vmin=-1, vmax=1, s=40, marker="h"
     )
     _triangle(ax1)
-    fig.colorbar(sc, ax=ax1, label="τ_b (GMS × energia)", shrink=0.8, pad=0.06)
+    cbar = fig.colorbar(sc, ax=ax1, label="τ_b (GMS × energia)", shrink=0.8, pad=0.06)
+    cbar.ax.yaxis.set_major_formatter(comma_formatter(2))
     ax1.set_title("Concordância com o ranking por energia", fontsize=10, pad=14)
 
-    best = sens["best_configuration"].astype("category")
+    best = (
+        sens["best_configuration"]
+        .map(lambda s: " | ".join([model_name(s.split(" | ")[0]), *s.split(" | ")[1:]]))
+        .astype("category")
+    )
     cmap = plt.get_cmap("tab10")
     for k, name in enumerate(best.cat.categories):
         m = (best == name).to_numpy()
@@ -135,7 +147,7 @@ def plot_figures(evaluation: ContextEvaluation, out_dir: Path, title: str) -> No
     _triangle(ax2)
     ax2.legend(fontsize=7, loc="upper left", bbox_to_anchor=(0.72, 1.0), frameon=False)
     ax2.set_title("Configuração de maior GMS", fontsize=10, pad=14)
-    fig.suptitle(f"Sensibilidade aos pesos — {title}", fontweight="bold")
+    fig.suptitle(f"Sensibilidade aos pesos: {title}", fontweight="bold")
     fig.tight_layout()
     for ext in ("png", "svg"):
         fig.savefig(out_dir / f"context_simplex.{ext}", dpi=300, bbox_inches="tight")
@@ -178,7 +190,9 @@ def main() -> None:
         or Path("docs/Results") / args.results_dir.parent.name / args.results_dir.name
     )
     plot_figures(
-        evaluation, figures, f"{args.results_dir.parent.name} ({args.results_dir.name})"
+        evaluation,
+        figures,
+        figure_title(args.results_dir.parent.name, args.results_dir.name),
     )
     print(report)
 
