@@ -25,15 +25,15 @@
 
 O **GreenML Score** é um framework Python profissional e automatizado para **medir, rastrear e reportar o impacto ambiental de modelos de Machine Learning**.
 
-Enquanto a maioria das ferramentas de ML foca exclusivamente em métricas preditivas como Acurácia e F1-Score (*Red AI*), o GreenML traz a **sustentabilidade para o centro da tomada de decisão** (*Green AI*), combinando monitoramento de hardware em tempo real com uma métrica composta rigorosa — o **GreenML Score (GMS)**.
+Enquanto a maioria das ferramentas de ML foca exclusivamente em métricas preditivas como Acurácia e F1-Score (*Red AI*), o GreenML traz a **sustentabilidade para o centro da tomada de decisão** (*Green AI*), combinando monitoramento de hardware em tempo real com uma métrica composta: o **GreenML Score (GMS)**.
 
 ### O que ele mede?
 
 | Dimensão | Unidade | Fonte |
 |---|---|---|
 | **Consumo Energético** | kWh | [CodeCarbon](https://github.com/mlco2/codecarbon) (RAPL / NVML) |
-| **Emissões de Carbono** | kg CO₂e | `C = E × IC_região` |
-| **Pegada Hídrica** | Litros | `W = E × WUE` | ---
+| **Emissões de Carbono** | kg CO₂e | `C = E × PUE × IC` (fatores do contexto de execução) |
+| **Pegada Hídrica** | Litros | `W = E × (WUE + PUE × EWIF)` (resfriamento e geração elétrica) | ---
 
 ## A Métrica: GreenML Score (GMS)
 
@@ -74,20 +74,20 @@ O framework é organizado em **4 camadas** independentes e desacopladas:
 
 ```mermaid
 graph TB
-    subgraph "Camada 1 — Collectors"
+    subgraph "Camada 1: Collectors"
         A[" CodeCarbon Adapter<br/><i>Instrumentação de Hardware</i>"]
     end
 
-    subgraph "Camada 2 — Estimators"
+    subgraph "Camada 2: Estimators"
         B[" Carbon Estimator<br/><i>E × IC_região → kg CO₂e</i>"]
         C[" Water Estimator<br/><i>E × WUE → Litros</i>"]
     end
 
-    subgraph "Camada 3 — Scoring"
+    subgraph "Camada 3: Scoring"
         D[" GMS Calculator<br/><i>Normalização Inversa + Pesos</i>"]
     end
 
-    subgraph "Camada 4 — Integrations"
+    subgraph "Camada 4: Integrations"
         E[" MLflow Logger"]
         F[" Sklearn Wrapper"]
     end
@@ -127,6 +127,9 @@ pip install -e .[dev]
 ```bash
 # Para executar os experimentos comparativos (XGBoost, datasets HuggingFace, etc.)
 pip install -e .[experiments]
+
+# Para abrir o painel interativo (Streamlit, Plotly e matplotlib; Python 3.11 ou superior)
+pip install -e .[app]
 ```
 
 ---
@@ -195,20 +198,93 @@ print(decomposition)
 
 ## Resultados Experimentais
 
-Experimento comparativo com **4 modelos** no dataset **20 Newsgroups** (classificação binária: `rec.autos` vs `sci.med`), cada um executado com **3 sementes aleatórias** (42, 123, 2024):
+Resultados do artigo final ([`docs/artigo_final/`](docs/artigo_final/)): quatro
+modelos (Regressão Logística, Random Forest, XGBoost e MLP), dez sementes por modelo,
+três conjuntos de dados (20 Newsgroups, Breast Cancer Wisconsin e Covertype) e sete
+contextos de execução descritos por fontes públicas (Ember, Reig et al. e AWS). Os
+números vêm de `experiments/results/<dataset>/full/` e das tabelas do artigo; carbono
+e água estão no contexto BR-local, local real de medição.
 
-| Ranking | Modelo | Acurácia | Tempo (s) | Energia (kWh) | GMS (0–100) |
-|:---:|---|:---:|:---:|:---:|:---:|
-| 1º | **Regressão Logística** | 0.9268 | 2.42 | 0.000010 | **92.70 ± 2.14** |
-| 2º | **Random Forest** | 0.8788 | 2.95 | 0.000023 | **82.29 ± 7.28** |
-| 3º | **Rede Neural (MLP)** | 0.9175 | 5.78 | 0.000042 | **68.22 ± 5.34** |
-| 4º | **XGBoost** | 0.8611 | 6.48 | 0.000102 | **21.83 ± 20.58** | >  Gráficos completos (PNG 300 DPI e SVG vetorial), tabela LaTeX e análise detalhada disponíveis em [`docs/Results/`](docs/Results/).
+**Tabela 2 do artigo (média ± desvio padrão; GMS de contexto único):**
+
+| Conjunto | Modelo | F1-Score | Energia (mWh) | Carbono (mg CO₂e) | Água (µL) | GMS |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| 20 Newsgroups | Regressão Logística | 0,936 ± 0,011 | 0,101 ± 0,021 | 0,011 | 1,9 | 99,8 ± 0,0 |
+| | Random Forest | 0,894 ± 0,013 | 9,14 ± 2,55 | 1,00 | 170 | 78,5 ± 6,0 |
+| | XGBoost | 0,869 ± 0,012 | 20,4 ± 5,1 | 2,24 | 378 | 52,1 ± 12,0 |
+| | MLP | 0,934 ± 0,013 | 25,7 ± 8,9 | 2,82 | 477 | 39,5 ± 20,9 |
+| Breast Cancer | Regressão Logística | 0,970 ± 0,012 | 0,023 ± 0,022 | 0,003 | 0,4 | 98,4 ± 1,5 |
+| | Random Forest | 0,956 ± 0,013 | 0,938 ± 0,204 | 0,103 | 17,4 | 34,6 ± 14,2 |
+| | XGBoost | 0,960 ± 0,017 | 0,828 ± 0,134 | 0,091 | 15,4 | 42,2 ± 9,4 |
+| | MLP | 0,923 ± 0,028 | 0,312 ± 0,087 | 0,034 | 5,8 | 78,2 ± 6,0 |
+| Covertype | Regressão Logística | 0,759 ± 0,003 | 1,04 ± 0,21 | 0,114 | 19,3 | 99,2 ± 0,2 |
+| | Random Forest | 0,893 ± 0,004 | 38,2 ± 12,1 | 4,20 | 710 | 70,5 ± 9,4 |
+| | XGBoost | 0,862 ± 0,004 | 6,00 ± 2,35 | 0,660 | 111 | 95,4 ± 1,8 |
+| | MLP | 0,851 ± 0,006 | 79,1 ± 33,1 | 8,69 | 1469 | 38,8 ± 25,6 |
+
+**Síntese das hipóteses (Tabela 6 do artigo):**
+
+| Hipótese | 20 Newsgroups | Breast Cancer | Covertype |
+|---|---|---|---|
+| H1: a Regressão Logística gasta menos energia | Confirmada (Friedman, p = 3,5 × 10⁻⁶) | Confirmada (p = 4,7 × 10⁻⁶) | Confirmada (p = 1,4 × 10⁻⁶) |
+| H2: os modelos mais caros são dominados ou gastam ao menos 10 vezes a energia da RL | Confirmada | Confirmada | Refutada (XGBoost na fronteira com 5,1 vezes a energia da RL) |
+| H3: o contexto inverte pares no ranking | Confirmada (τb = 0,798; mínimo de 0,582) | Confirmada (τb = 0,786; mínimo de 0,576) | Confirmada com w_E < 0,4 (mínimo de 0,696) |
+| H4: o contexto muda o modelo escolhido | Não confirmada | Não confirmada (só no vértice w_C = 1) | Parcialmente confirmada (11,3% das combinações de pesos) |
 
 ### Principais Conclusões
 
-1. **Eficiência Clássica Confirmada:** A Regressão Logística atingiu a maior acurácia (92.68%) gastando 10× menos energia, liderando o GMS com folga.
-2. **Trade-off Red AI vs Green AI:** XGBoost e MLP consumiram ordens de magnitude a mais sem ganho proporcional de acurácia.
-3. **Fronteira de Pareto:** O GMS oferece uma régua objetiva para balancear performance preditiva × custo ecológico.
+1. **A Regressão Logística foi a mais econômica** nos três conjuntos e em todas as sementes.
+2. **No Covertype há compromisso real entre qualidade e custo:** o XGBoost ganha 10,4 pontos de F1 com 5,1 vezes a energia da RL, a 1,6 J por ponto de F1; o Random Forest ganha 13,6 pontos a 9,3 J por ponto.
+3. **O contexto reordena as configurações** (τb de Kendall entre 0,58 e 0,88), mas só muda o modelo escolhido no Covertype e com pesos concentrados em carbono ou água: com todo o peso no carbono, o XGBoost em Estocolmo (GMS 99,6) supera a RL na rede indiana (98,8).
+4. **Limitação da medição:** comparado à descarga da bateria, o CodeCarbon captou cerca de 7% do aumento real de consumo causado pela carga. A ordem entre os modelos é confiável; os valores absolutos de energia, carbono e água são indicativos.
+
+> Gráficos e tabelas gerados pelos scripts estão em [`docs/Results/`](docs/Results/). Os mesmos números podem ser explorados no [painel interativo](#painel-interativo).
+
+---
+
+## Painel interativo
+
+O **GreenML Dashboard** é um painel em [Streamlit](https://streamlit.io) que lê os
+resultados de `experiments/results/*/full` e o `experiments/contexts/contexts.csv` e
+mostra, sem refazer nenhum experimento, o que o artigo descreve. São seis telas:
+
+| Tela | O que mostra |
+|---|---|
+| Início | o que é o GMS, de onde vêm os dados e como navegar |
+| Visão geral | F1-Score, energia, carbono, água e GMS por modelo, com os rankings lado a lado |
+| Qualidade × custo | gráfico F1 × energia com a fronteira de Pareto e o custo marginal frente à RL |
+| Simulador de contexto | pesos ajustáveis, mapa das 7 regiões, GMS ao vivo e pares invertidos |
+| Cartão ambiental | ficha de um modelo em uma região, para baixar em PNG, Markdown ou CSV |
+| Avalie seu modelo | envio de um CSV próprio (modelo, f1, energia) e cálculo do GMS, da fronteira e da regra D4 |
+
+**Windows (Prompt de Comando), na pasta do projeto:**
+
+```bat
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -e ".[app]"
+.venv\Scripts\python.exe -m streamlit run app\Home.py
+```
+
+**Linux ou macOS:**
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ".[app]"
+.venv/bin/python -m streamlit run app/Home.py
+```
+
+O painel exige Python 3.11 ou superior (a biblioteca funciona a partir do 3.10) e abre
+em `http://localhost:8501`. Funciona sem internet, exceto o mapa de
+fundo do simulador, baixado pelo Plotly (os pontos das regiões aparecem mesmo
+offline).
+
+| | |
+|---|---|
+| ![Início](docs/painel/capturas/t1_inicio.jpg) | ![Visão geral](docs/painel/capturas/t2_visao_geral.jpg) |
+| ![Qualidade × custo](docs/painel/capturas/t3_qualidade_custo.jpg) | ![Simulador de contexto](docs/painel/capturas/t4_simulador.jpg) |
+| ![Cartão ambiental](docs/painel/capturas/t5_cartao.jpg) | ![Avalie seu modelo](docs/painel/capturas/t6_avalie.jpg) |
+
+O plano de construção e as decisões estão em [`docs/plano_painel.md`](docs/plano_painel.md).
 
 ---
 
@@ -224,14 +300,17 @@ Abra o navegador em `http://127.0.0.1:5000` para visualizar todas as métricas a
 
 ## Testes
 
-O framework possui **32 testes unitários** cobrindo todas as camadas da arquitetura:
+A bateria de testes (pytest) cobre a biblioteca, os scripts de experimento e o painel
+(camada de dados, gráficos, cartão, envio de CSV e as seis telas via
+`streamlit.testing`, sem abrir servidor). Os testes do painel conferem os números com
+as tabelas do artigo e não precisam de internet.
 
 ```bash
 # Rodar todos os testes
 pytest
 
-# Rodar com relatório de cobertura
-pytest --cov=green_ml_score --cov-report=term-missing
+# Rodar com relatório de cobertura da biblioteca e do painel
+pytest --cov=green_ml_score --cov=app --cov-report=term-missing
 ```
 
 ---
@@ -245,15 +324,21 @@ TCC-Green-ML-Score/
 │   ├── estimators/            # Camada 2: Carbono (E×IC) e Água (E×WUE)
 │   ├── scoring/               # Camada 3: Cálculo do GMS, normalização, pesos
 │   └── integrations/          # Camada 4: MLflow logger, Sklearn wrapper
+├── app/                       # Painel interativo (Streamlit)
+│   ├── Home.py                # Ponto de entrada: streamlit run app/Home.py
+│   ├── core/                  # Dados, gráficos, cartão e envio de CSV (sem Streamlit)
+│   └── views/                 # Uma página por tela
 ├── experiments/               # Experimento comparativo e geração de resultados
 │   ├── comparative_experiment.py
 │   ├── generate_results.py
 │   ├── config.py
 │   └── results/               # Dados brutos do experimento
-├── tests/                     # 32 testes unitários (pytest)
+├── tests/                     # Testes (pytest) da biblioteca, dos experimentos e do painel
 ├── docs/
 │   ├── Diagrams/              # Diagramas de arquitetura (.drawio)
-│   └── Results/               # Gráficos e tabelas gerados
+│   ├── Results/               # Gráficos e tabelas gerados
+│   ├── artigo_final/          # Artigo final (.doc, .docx e .pdf)
+│   └── painel/capturas/       # Capturas de tela do painel
 ├── .github/workflows/ci.yml   # CI: Ruff + Black + Pytest (Python 3.10–3.13)
 ├── pyproject.toml             # Configuração do projeto e dependências
 ├── CHANGELOG.md               # Histórico de versões
@@ -305,7 +390,7 @@ Este projeto está licenciado sob a [MIT License](LICENSE).
 
 ## Autores
 
-- **Octavio Bordotti** — [GitHub](https://github.com/OctavioSB11)
+- **Octavio Bordotti**: [GitHub](https://github.com/OctavioSB11)
 - **Danilo Parolin**
 
-**Trabalho de Conclusão de Curso (TCC)** — 2026
+**Trabalho de Conclusão de Curso (TCC)**, 2026

@@ -9,6 +9,8 @@ Partição de Equivalência e Análise de Valor Limite):
 - Fixtures utilitárias para simulação de hardware/emissões (Mocks/Stubs).
 """
 
+import importlib.util
+
 import pytest
 
 from green_ml_score.scoring.gms import (
@@ -16,6 +18,13 @@ from green_ml_score.scoring.gms import (
     NormalizationBounds,
     Weights,
 )
+
+# Os testes do painel (app/) dependem do extra "app" (Streamlit 1.66 ou superior, que
+# exige Python 3.11). Sem ele instalado, como no Python 3.10 da CI, não são coletados.
+APP_EXTRA_INSTALLED = all(
+    importlib.util.find_spec(name) is not None for name in ("streamlit", "plotly")
+)
+collect_ignore_glob = [] if APP_EXTRA_INSTALLED else ["test_app_*.py"]
 
 # ==============================================================================
 # FIXTURES: DIMENSÃO DE DADOS AMBIENTAIS (EnvironmentalMetrics)

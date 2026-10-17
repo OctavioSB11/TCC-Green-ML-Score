@@ -67,9 +67,10 @@ def inicio() -> None:
     with st.expander("Fontes dos dados"):
         st.markdown(
             "Resultados: `experiments/results/<dataset>/full/comparative_results.csv`. "
-            "Contextos: `experiments/contexts/contexts.csv` (intensidade de carbono da "
-            "Ember, 2025; água da geração elétrica de Reig et al., 2020; PUE e WUE das "
-            "fichas de sustentabilidade da AWS, 2025). Carbono e água são recalculados "
+            "Contextos: `experiments/contexts/contexts.csv` (intensidade de carbono de "
+            "2025 publicada pela Ember em 2026; água da geração elétrica de Reig et "
+            "al., 2020; PUE e WUE de 2025 das fichas de sustentabilidade da AWS, "
+            "2026). Carbono e água são recalculados "
             "a partir da energia medida e dos fatores de cada contexto; o padrão é o "
             f"contexto {data.REFERENCE_CONTEXT}, local real de medição."
         )

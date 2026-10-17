@@ -10,6 +10,10 @@ jobs:
   test:
     name: Testes & Qualidade (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    env:
+      # Modo offline do CodeCarbon e matplotlib sem tela (cartão ambiental em PNG).
+      CODECARBON_OFFLINE_MODE: "true"
+      MPLBACKEND: "Agg"
     strategy:
       fail-fast: false
       matrix:
@@ -30,10 +34,12 @@ jobs:
         # Os testes cobrem também experiments/ (análise, relatórios em Markdown e
         # validação), que dependem do extra "experiments" (tabulate, scipy,
         # matplotlib, xgboost), e os gráficos do painel (app/), que dependem do
-        # extra "app" (streamlit, plotly).
+        # extra "app" (streamlit, plotly, matplotlib). O painel exige Python 3.11 ou
+        # superior (Streamlit 1.66); no 3.10 só a biblioteca e os experimentos são
+        # instalados e testados, e os testes do painel não são coletados.
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install -e .[dev,experiments,app]
+          pip install -e ".[${{ matrix.python-version == '3.10' && 'dev,experiments' || 'dev,experiments,app' }}]"
 
       - name: Verificação de Estilo e Linting (Ruff)
         run: |
@@ -44,7 +50,15 @@ jobs:
           black --check .
 
       - name: Executar Bateria de Testes com Cobertura (Pytest-cov)
-        env:
-          CODECARBON_OFFLINE_MODE: "true"
+        # Biblioteca, experimentos e camada de dados do painel. Nenhum teste usa
+        # internet: os dados vêm de experiments/results e experiments/contexts.
         run: |
-          pytest --cov=green_ml_score --cov-report=term-missing
+          pytest --ignore=tests/test_app_pages.py --cov=green_ml_score --cov=app
+
+      - name: Smoke Test das Telas do Painel (Streamlit AppTest, sem servidor)
+        if: matrix.python-version != '3.10'
+        # Roda a página inicial e as cinco telas para os três conjuntos de dados e
+        # confere os números de aceite (por exemplo, XGBoost em Estocolmo à frente
+        # da RL na Índia com peso total no carbono).
+        run: |
+          pytest tests/test_app_pages.py --cov=green_ml_score --cov=app --cov-append --cov-report=term-missing

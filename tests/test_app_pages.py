@@ -90,3 +90,21 @@ def test_evaluate_page_waits_for_upload_without_errors() -> None:
     assert not at.exception
     assert not at.error
     assert any("Envie um arquivo" in c.value for c in at.caption)
+
+
+def test_home_runs_and_registers_every_view() -> None:
+    at = AppTest.from_file(str(ROOT / "app/Home.py"), default_timeout=120)
+    at.run()
+    assert not at.exception
+    assert at.title[0].value == "GreenML Dashboard"
+    assert at.sidebar.selectbox[0].options == [
+        "20 Newsgroups",
+        "Breast Cancer",
+        "Covertype",
+    ]
+    values = [m.value for m in at.metric]
+    assert values == ["3", "4", "10", "7"]
+    home = (ROOT / "app/Home.py").read_text(encoding="utf-8")
+    views = sorted(p.name for p in (ROOT / "app/views").glob("*.py"))
+    assert views == [Path(p).name for p in PAGES]
+    assert all(f'"{name}"' in home for name in views)
