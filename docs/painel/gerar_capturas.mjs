@@ -8,8 +8,8 @@ import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-const [chromePath, outDir, profileDir] = process.argv.slice(2);
-const BASE = "http://localhost:8501";
+const [chromePath, outDir, profileDir, baseUrl] = process.argv.slice(2);
+const BASE = baseUrl || "http://localhost:8501"; // 4º argumento opcional
 const PORT = 9333;
 const W = 1600, H = 900, DSF = 2;
 mkdirSync(outDir, { recursive: true });

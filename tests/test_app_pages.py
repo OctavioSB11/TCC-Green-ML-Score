@@ -104,7 +104,13 @@ def test_home_runs_and_registers_every_view() -> None:
     ]
     values = [m.value for m in at.metric]
     assert values == ["3", "4", "10", "7"]
+    captions = " ".join(c.value for c in at.sidebar.caption)
+    assert "Danilo Rodrigues Parolin" in captions
+    assert "Octávio de Sousa Bordotti" in captions
     home = (ROOT / "app/Home.py").read_text(encoding="utf-8")
     views = sorted(p.name for p in (ROOT / "app/views").glob("*.py"))
     assert views == [Path(p).name for p in PAGES]
     assert all(f'"{name}"' in home for name in views)
+    # Rótulo da página inicial no menu (a tradução automática do Chrome o alterava).
+    assert 'st.Page(inicio, title="Início"' in home
+    assert 'lang = "pt-BR"' in home

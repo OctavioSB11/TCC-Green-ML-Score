@@ -15,10 +15,26 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import streamlit as st  # noqa: E402
+import streamlit.components.v1 as components  # noqa: E402
 
 from app.core import data, state, theme  # noqa: E402
 
 PAGES_DIR = Path(__file__).resolve().parent / "views"
+AUTHORS = "**Autores**  \nDanilo Rodrigues Parolin  \nOctávio de Sousa Bordotti"
+NO_TRANSLATE_JS = """
+<script>
+const doc = window.parent.document;
+doc.documentElement.lang = "pt-BR";
+doc.documentElement.setAttribute("translate", "no");
+doc.documentElement.classList.add("notranslate");
+if (!doc.querySelector('meta[name="google"]')) {
+  const meta = doc.createElement("meta");
+  meta.name = "google";
+  meta.content = "notranslate";
+  doc.head.appendChild(meta);
+}
+</script>
+"""
 
 
 def inicio() -> None:
@@ -129,6 +145,11 @@ def main() -> None:
         f"Carbono e água calculados no contexto {data.REFERENCE_CONTEXT}, "
         "local real de medição."
     )
+    st.sidebar.caption(AUTHORS)
+    with st.sidebar:
+        # O Streamlit declara a página como inglês (lang="en"); sem isto, a tradução
+        # automática do Chrome "traduz" os textos em português e as fórmulas.
+        components.html(NO_TRANSLATE_JS, height=0)
     nav.run()
 
 
