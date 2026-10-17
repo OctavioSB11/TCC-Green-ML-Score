@@ -547,11 +547,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--carbon-intensity",
         type=float,
-        default=config.CARBON_INTENSITY_SAO_PAULO,
+        default=config.CARBON_INTENSITY_BR_2024,
         help="gCO2e/kWh",
     )
     parser.add_argument(
-        "--wue", type=float, default=config.WUE_GOOGLE_2024, help="L/kWh"
+        "--wue", type=float, default=config.WUE_MICROSOFT_FY24, help="L/kWh"
     )
     parser.add_argument(
         "--no-mlflow", action="store_true", help="Não registra no MLflow."

@@ -26,14 +26,14 @@ def main():
         base_rf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
 
         # O Wrapper injeta o tracker no .fit().
-        # IC regional (São Paulo ≈ 120 gCO2e/kWh) e WUE (Google 2024 ≈ 0.52 L/kWh),
+        # IC do Brasil em 2024 (Ember, 106,06 gCO2/kWh) e WUE da Microsoft (FY24, 0,30 L/kWh),
         # conforme protocolo experimental da Seção 5.4 do TCC.
         green_rf = GreenMLSklearnWrapper(
             base_rf,
             bounds=bounds,
             tracker_kwargs={
-                "carbon_intensity_g_per_kwh": 120,
-                "wue_liters_per_kwh": 0.52,
+                "carbon_intensity_g_per_kwh": 106.06,
+                "wue_liters_per_kwh": 0.30,
             },
         )
 

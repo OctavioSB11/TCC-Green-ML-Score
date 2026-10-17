@@ -156,8 +156,8 @@ with mlflow.start_run():
         base_model,
         bounds=bounds,
         tracker_kwargs={
-            "carbon_intensity_g_per_kwh": 120,  # São Paulo, Brasil
-            "wue_liters_per_kwh": 0.52,         # Google 2024
+            "carbon_intensity_g_per_kwh": 106.06,  # Brasil 2024 (Ember)
+            "wue_liters_per_kwh": 0.30,  # Microsoft FY24
         },
     )
 

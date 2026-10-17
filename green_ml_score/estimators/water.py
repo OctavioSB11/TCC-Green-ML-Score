@@ -9,8 +9,7 @@ def calculate_water_usage(energy_kwh: float, wue_liters_per_kwh: float = 1.8) ->
         energy_kwh         : energia consumida em kWh
         wue_liters_per_kwh : WUE do ambiente (litros por kWh).
                              Valores de referência:
-                               Google Cloud (2024) ≈ 0.52 L/kWh
-                               Microsoft Azure      ≈ 1.1 L/kWh
+                               Microsoft, média global FY24 = 0.30 L/kWh
                                Média indústria      ≈ 1.8 L/kWh
                                Instalações otimizadas (ar) ≈ 0.2 L/kWh
 

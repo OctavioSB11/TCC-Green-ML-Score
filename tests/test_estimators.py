@@ -9,8 +9,8 @@ from green_ml_score.estimators import (
 
 
 def test_carbon_emissions_formula():
-    """1 kWh em São Paulo (IC=120 gCO2e/kWh) → 0.12 kg CO2e."""
-    assert calculate_carbon_emissions(1.0, 120) == pytest.approx(0.12)
+    """1 kWh no Brasil (IC=106,06 gCO2/kWh, Ember 2024) → 0.10606 kg CO2."""
+    assert calculate_carbon_emissions(1.0, 106.06) == pytest.approx(0.10606)
 
 
 def test_carbon_emissions_us_grid():
@@ -36,8 +36,8 @@ def test_carbon_emissions_negative_intensity_raises():
 
 
 def test_water_usage_formula():
-    """10 kWh com WUE do Google 2024 (0.52 L/kWh) → 5.2 L."""
-    assert calculate_water_usage(10.0, 0.52) == pytest.approx(5.2)
+    """10 kWh com WUE da Microsoft FY24 (0.30 L/kWh) → 3.0 L."""
+    assert calculate_water_usage(10.0, 0.30) == pytest.approx(3.0)
 
 
 def test_water_usage_negative_energy_raises():
