@@ -46,7 +46,7 @@ na semana 4.
 - ~~Comprar o medidor de consumo de tomada~~ — descartado (sem custo); substituído pela validação via bateria (14/10).
 - Registrar por escrito a mudança de objetivo com o orientador.
 
-## Semana 2 (05/10 – 11/10) — status (implementada em 14/10, não versionada)
+## Semana 2 (05/10 – 11/10): status (implementada em 14/10 e versionada)
 
 | Item | Onde | Estado |
 |---|---|---|
@@ -54,7 +54,7 @@ na semana 4.
 | 2. Baseline de repouso | `measure_idle()`; `config.IDLE_BASELINE_S` (60 s; 10 s no quick-run), `--idle-seconds`; colunas `energy_net_kwh`, `energy_net_j`, `infer_energy_net_kwh`, `idle_power_w`, `train_session_s` | Feito |
 | 3. Avisos de procedência | `provenance_warnings_for()` e `ProvenanceWarning` em `green_ml_score/collectors/codecarbon.py`; gravados em `run_metadata.json` e nos cartões | Feito |
 | 4. Score relativo | `green_ml_score/scoring/relative.py`; `add_relative_scores()` pareado por semente; colunas `energy_ratio_ref`, `delta_f1_points`, `marginal_cost_j_per_f1_point`, `dominated` | Feito |
-| 5. Módulo `contexts` | `green_ml_score/contexts/` (`ExecutionContext`, `load_contexts_csv`, `evaluate_configurations`, `kendall_tau_b`, `simplex_grid`); script `experiments/context_analysis.py` | Feito; **falta preencher `experiments/contexts/contexts.csv`** (integrante B) |
+| 5. Módulo `contexts` | `green_ml_score/contexts/` (`ExecutionContext`, `load_contexts_csv`, `evaluate_configurations`, `kendall_tau_b`, `simplex_grid`); script `experiments/context_analysis.py` | Feito; `experiments/contexts/contexts.csv` preenchido em 17/10 (sete contextos, ver Semana 5, etapa 1) |
 | 6. Cartão ambiental | `green_ml_score/reporting/card.py`; gravado em `results/<dataset>/<modo>/cards/<modelo>.md` | Feito |
 
 Validação: `black`, `ruff` e `pytest` (80 testes) passando; `--quick-run` em
@@ -212,6 +212,13 @@ Pendente da dupla:
   vereditos não mudam para limiares entre 5,2 e 35,9. Registrada na 5.6 e citada na
   8.6 (`revisao_texto_semana5.md`, itens 4 e 8.4).
 - Registrar com o orientador a mudança de objetivo (item 7 de `revisao_texto_semana5.md`).
+
+## Painel interativo e artigo final (17/10/2026)
+
+| Item | Estado |
+|---|---|
+| Painel interativo (GreenML Dashboard, Streamlit) em `app/` | Feito: tarefas T1 a T8 de `docs/plano_painel.md` (seis telas, testes de fumaça na CI, roteiro de demonstração e capturas em `docs/painel/`) |
+| Artigo final no template da FAJ em `docs/artigo_final/` | `.docx` atualizado com a seção do painel (Figura 7); `.pdf` e `.doc` ainda são da versão anterior e precisam ser reexportados |
 
 ## Semanas seguintes
 - Semana 5 (26/10 – 01/11): reescrita do texto.

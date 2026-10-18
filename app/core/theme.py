@@ -13,7 +13,6 @@ GREEN = "#1B7F3B"
 GREEN_DARK = "#0E4D23"
 GREEN_LIGHT = "#EEF6F0"
 GREY = "#5F6B66"
-ALERT = "#B3261E"
 
 MODEL_COLORS: dict[str, str] = {
     "Logistic_Regression": "#2CA02C",

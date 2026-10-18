@@ -31,9 +31,13 @@ Enquanto a maioria das ferramentas de ML foca exclusivamente em métricas predit
 
 | Dimensão | Unidade | Fonte |
 |---|---|---|
-| **Consumo Energético** | kWh | [CodeCarbon](https://github.com/mlco2/codecarbon) (RAPL / NVML) |
+| **Consumo Energético** | kWh | [CodeCarbon](https://github.com/mlco2/codecarbon): no Windows, estimativa pela carga da CPU sobre o TDP (`cpu_load`), sem RAPL; RAPL ou NVML quando disponíveis |
 | **Emissões de Carbono** | kg CO₂e | `C = E × PUE × IC` (fatores do contexto de execução) |
-| **Pegada Hídrica** | Litros | `W = E × (WUE + PUE × EWIF)` (resfriamento e geração elétrica) | ---
+| **Pegada Hídrica** | Litros | `W = E × (WUE + PUE × EWIF)` (resfriamento e geração elétrica) |
+
+Os fatores de cada contexto (IC, PUE, WUE on-site e água off-site EWIF) vêm de `experiments/contexts/contexts.csv`, com a fonte citada em cada linha. Detalhes da medição em [`docs/ambiente_medicao.md`](docs/ambiente_medicao.md).
+
+---
 
 ## A Métrica: GreenML Score (GMS)
 
@@ -56,7 +60,9 @@ X̂ = 1 − (X / X_max)
 | `w_E` | Peso da dimensão energética | 1/3 |
 | `w_C` | Peso da dimensão de carbono | 1/3 |
 | `w_W` | Peso da dimensão hídrica | 1/3 |
-| `X_max` | Maior valor observado no conjunto de modelos comparados | Auto | > **Interpretação:** Quanto menor o consumo de recursos (energia, carbono, água), maior o GMS. Um GMS de 100 indica o modelo mais eficiente do grupo; um GMS próximo de 0 indica o mais custoso.
+| `X_max` | Maior valor observado no conjunto de modelos comparados | Auto |
+
+> **Interpretação:** Quanto menor o consumo de recursos (energia, carbono, água), maior o GMS. Um GMS de 100 indica o modelo mais eficiente do grupo; um GMS próximo de 0 indica o mais custoso.
 
 ### Pesos Contextuais (Seção 7 do TCC)
 
@@ -66,47 +72,52 @@ Os pesos podem ser ajustados conforme o contexto operacional:
 |---|:---:|:---:|:---:|---|
 | Neutro (padrão) | 1/3 | 1/3 | 1/3 | Sem viés dimensional |
 | Alta intensidade de carbono | 0.2 | 0.5 | 0.3 | Regiões com grid elétrico fóssil |
-| Estresse hídrico | 0.3 | 0.2 | 0.5 | Data centers em regiões áridas | ---
+| Estresse hídrico | 0.3 | 0.2 | 0.5 | Data centers em regiões áridas |
+
+---
 
 ## Arquitetura
 
-O framework é organizado em **4 camadas** independentes e desacopladas:
+A biblioteca `green_ml_score` é dividida em módulos independentes; o painel (`app/`) e os scripts de `experiments/` usam esses módulos sem duplicar o cálculo do GMS:
+
+| Módulo | Papel |
+|---|---|
+| `collectors` | `GreenMLTracker`: adaptador do CodeCarbon, com procedência da medição e avisos (`ProvenanceWarning`) |
+| `estimators` | conversões simples de energia em carbono (`E × IC`) e em água (`E × WUE`), usadas pelo tracker |
+| `contexts` | `ExecutionContext` (região e horário): carbono `E × PUE × IC` e água `E × (WUE + PUE × EWIF)`; avaliação modelo × contexto, τ_b de Kendall e varredura no simplex de pesos |
+| `scoring` | GMS com normalização inversa e pesos; score relativo à referência e dominância de Pareto |
+| `reporting` | cartão ambiental por modelo em Markdown |
+| `integrations` | registro no MLflow e wrapper para estimadores do scikit-learn |
+
+No artigo, esses módulos compõem um fluxo de MLOps em cinco camadas: versionamento por sementes e commits, rastreamento no MLflow, monitoramento com o CodeCarbon, cálculo do GMS e visualização. A quinta camada é o [painel interativo](#painel-interativo).
 
 ```mermaid
 graph TB
-    subgraph "Camada 1: Collectors"
-        A[" CodeCarbon Adapter<br/><i>Instrumentação de Hardware</i>"]
-    end
-
-    subgraph "Camada 2: Estimators"
-        B[" Carbon Estimator<br/><i>E × IC_região → kg CO₂e</i>"]
-        C[" Water Estimator<br/><i>E × WUE → Litros</i>"]
-    end
-
-    subgraph "Camada 3: Scoring"
-        D[" GMS Calculator<br/><i>Normalização Inversa + Pesos</i>"]
-    end
-
-    subgraph "Camada 4: Integrations"
-        E[" MLflow Logger"]
-        F[" Sklearn Wrapper"]
-    end
+    A["collectors<br/><i>CodeCarbon: energia medida</i>"]
+    B["estimators<br/><i>E × IC e E × WUE</i>"]
+    G["contexts<br/><i>E × PUE × IC e E × (WUE + PUE × EWIF)</i>"]
+    D["scoring<br/><i>GMS, score relativo, Pareto</i>"]
+    R["reporting<br/><i>cartão ambiental</i>"]
+    E["integrations<br/><i>MLflow e scikit-learn</i>"]
+    P["app/ (painel Streamlit)<br/><i>visualização</i>"]
 
     A -->|"energia kWh"| B
-    A -->|"energia kWh"| C
-    B -->|"carbono"| D
-    C -->|"água"| D
-    A -->|"energia"| D
-    D -->|"GMS"| E
-    D -->|"GMS"| F
-    F -->|"auto-tracking"| A
+    A -->|"energia kWh"| G
+    B --> D
+    G --> D
+    D --> R
+    D --> E
+    D --> P
+    G --> P
+    E -->|"auto-tracking"| A
 
     style A fill:#2d6a4f,stroke:#1b4332,color:#fff
     style B fill:#52796f,stroke:#354f52,color:#fff
-    style C fill:#52796f,stroke:#354f52,color:#fff
+    style G fill:#52796f,stroke:#354f52,color:#fff
     style D fill:#84a98c,stroke:#52796f,color:#fff
+    style R fill:#cad2c5,stroke:#84a98c,color:#333
     style E fill:#cad2c5,stroke:#84a98c,color:#333
-    style F fill:#cad2c5,stroke:#84a98c,color:#333
+    style P fill:#cad2c5,stroke:#84a98c,color:#333
 ```
 
 ---
@@ -125,7 +136,7 @@ pip install -e .[dev]
 ### Dependências Opcionais
 
 ```bash
-# Para executar os experimentos comparativos (XGBoost, datasets HuggingFace, etc.)
+# Para executar os experimentos comparativos (XGBoost, SciPy e datasets do scikit-learn)
 pip install -e .[experiments]
 
 # Para abrir o painel interativo (Streamlit, Plotly e matplotlib; Python 3.11 ou superior)
@@ -319,26 +330,34 @@ pytest --cov=green_ml_score --cov=app --cov-report=term-missing
 
 ```
 TCC-Green-ML-Score/
-├── green_ml_score/            # Código-fonte do framework
-│   ├── collectors/            # Camada 1: Adaptadores de instrumentação (CodeCarbon)
-│   ├── estimators/            # Camada 2: Carbono (E×IC) e Água (E×WUE)
-│   ├── scoring/               # Camada 3: Cálculo do GMS, normalização, pesos
-│   └── integrations/          # Camada 4: MLflow logger, Sklearn wrapper
+├── green_ml_score/            # Biblioteca (código-fonte do framework)
+│   ├── collectors/            # GreenMLTracker: adaptador do CodeCarbon e procedência
+│   ├── estimators/            # Carbono (E×IC) e água (E×WUE) do tracker
+│   ├── contexts/              # Contextos de execução (região × horário) e avaliação modelo × contexto
+│   ├── scoring/               # GMS, normalização, pesos, score relativo e Pareto
+│   ├── reporting/             # Cartão ambiental em Markdown
+│   ├── integrations/          # MLflow e wrapper do scikit-learn
+│   └── callbacks/             # Reservado para callbacks de frameworks (ainda vazio)
 ├── app/                       # Painel interativo (Streamlit)
 │   ├── Home.py                # Ponto de entrada: streamlit run app/Home.py
 │   ├── core/                  # Dados, gráficos, cartão e envio de CSV (sem Streamlit)
 │   └── views/                 # Uma página por tela
-├── experiments/               # Experimento comparativo e geração de resultados
-│   ├── comparative_experiment.py
+├── experiments/               # Experimento comparativo e análises
+│   ├── comparative_experiment.py  # Protocolo de medição (treino e inferência)
+│   ├── run_analysis.py        # Estatística, figuras e contextos de todas as execuções
+│   ├── statistical_analysis.py
 │   ├── generate_results.py
+│   ├── context_analysis.py
+│   ├── energy_validation.py   # Validação física pela descarga da bateria
 │   ├── config.py
-│   └── results/               # Dados brutos do experimento
+│   ├── contexts/              # contexts.csv com as fontes de cada fator
+│   └── results/               # Resultados brutos (gerados só pelos scripts)
 ├── tests/                     # Testes (pytest) da biblioteca, dos experimentos e do painel
 ├── docs/
 │   ├── Diagrams/              # Diagramas de arquitetura (.drawio)
 │   ├── Results/               # Gráficos e tabelas gerados
 │   ├── artigo_final/          # Artigo final (.doc, .docx e .pdf)
-│   └── painel/capturas/       # Capturas de tela do painel
+│   └── painel/                # Capturas, roteiro de demonstração e slides do painel
 ├── .github/workflows/ci.yml   # CI: Ruff + Black + Pytest (Python 3.10–3.13)
 ├── pyproject.toml             # Configuração do projeto e dependências
 ├── CHANGELOG.md               # Histórico de versões

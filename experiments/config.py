@@ -17,11 +17,9 @@ class ExperimentConfig:
     # IC média do Brasil em 2024 (Ember, Yearly electricity data, "CO2 intensity"),
     # mesma fonte do contexts.csv; o BR-local usa o ano de 2025 (109,95).
     CARBON_INTENSITY_BR_2024: float = 106.06  # gCO2/kWh
-    CARBON_INTENSITY_US_GRID: float = 380.0  # gCO2e/kWh
     # WUE global da Microsoft no ano fiscal de 2024 (julho/2023 a junho/2024),
     # "Measuring energy and water efficiency for Microsoft datacenters".
     WUE_MICROSOFT_FY24: float = 0.30  # L/kWh
-    WUE_INDUSTRY_AVG: float = 1.8  # L/kWh
 
     # Reprodutibilidade: cada semente define a divisão treino/teste E a
     # inicialização dos modelos, de modo que a variância reportada inclua a

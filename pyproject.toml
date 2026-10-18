@@ -7,8 +7,11 @@ name = "green-ml-score"
 version = "0.1.0"
 description = "Métrica ambiental para modelos de Machine Learning."
 readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
 authors = [
-  { name = "Octavio Bordotti e Danilo Parolin" }
+  { name = "Octávio de Sousa Bordotti" },
+  { name = "Danilo Rodrigues Parolin" }
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -18,7 +21,7 @@ classifiers = [
 dependencies = [
     "mlflow>=2.0.0",
     "codecarbon>=2.3.1",
-    "requests>=2.28.0",
+    "numpy>=1.23.0",
     "pandas>=1.5.0",
     "scikit-learn>=1.2.0"
 ]
@@ -27,8 +30,8 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
-    "black",
-    "ruff"
+    "black>=26,<27",
+    "ruff>=0.15,<0.16"
 ]
 experiments = [
     "xgboost>=1.7.0",
@@ -56,6 +59,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --strict-markers"
+
+[tool.black]
+# Mesmo alvo do ruff; sem isso o Black infere até 3.14 a partir de requires-python.
+target-version = ["py310"]
 
 [tool.ruff]
 target-version = "py310"
