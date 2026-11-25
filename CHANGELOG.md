@@ -5,6 +5,28 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/spec/v2.0.0.html).
 
+## [Não lançado] (organização do repositório, 18/10/2026)
+
+### Removido
+- Cópias idênticas ou redundantes: `docs/TCC_GreenML_Score_backup_20261017.docx`, os três `README.md` repetidos de `docs/Results/_legacy_v0.1/<dataset>/`, as cópias `.txt` de `docs/Diagrams/*.drawio` e `docs/.gitkeep`.
+- Código sem uso: `as_dict` (`app/core/card.py`), `profiles` (`app/core/state.py`), `ALERT` (`app/core/theme.py`), `CARBON_INTENSITY_US_GRID` e `WUE_INDUSTRY_AVG` (`experiments/config.py`).
+
+### Alterado
+- README e CONTRIBUTING: medição descrita como estimativa do CodeCarbon pela carga da CPU (sem RAPL no Windows), módulos da biblioteca (incluindo `contexts` e `reporting`) e fluxo de cinco camadas do artigo, datasets do scikit-learn, estrutura de pastas e tabelas corrigidas.
+- `pyproject.toml`: `requires-python >= 3.10`, licença MIT, dois autores, `numpy` nas dependências principais, `requests` removido (sem uso), faixas de versão para `black` e `ruff`.
+- `.gitignore`: `.streamlit/secrets.toml` e `node_modules/`.
+
+### Corrigido
+- `FutureWarning` do pandas na leitura de números do envio de CSV (`app/core/upload.py`).
+
+## [Não lançado] (painel interativo, contextos e artigo final, 17/10/2026)
+
+### Adicionado
+- Painel interativo GreenML Dashboard (Streamlit) em `app/`: início, visão geral, qualidade × custo, simulador de contexto, cartão ambiental e avalie seu modelo; extra `app` no `pyproject.toml`; testes da camada de dados, dos gráficos, do cartão, do envio de CSV e de fumaça das telas; passo próprio na CI (tarefas T1 a T8 de `docs/plano_painel.md`).
+- `docs/painel/`: roteiro de demonstração, capturas para o README e para os slides e script de captura.
+- `experiments/contexts/contexts.csv` preenchido com sete contextos (BR, FR e IN locais; AWS São Paulo, Virgínia, Frankfurt e Estocolmo), com fonte e data de acesso por linha; valores não confirmados em `contexts_pendentes.csv`.
+- Artigo final no template da FAJ em `docs/artigo_final/`, com a seção do painel (Figura 7).
+
 ## [Não lançado] — análise, figuras e tabelas (semana 4)
 
 ### Alterado (15/10)

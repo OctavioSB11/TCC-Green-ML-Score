@@ -43,8 +43,10 @@ Antes de iniciar a configuração do ambiente, certifique-se de possuir as ferra
 | :--- | :--- | :--- |
 | **Python** | `3.10+` | O framework é testado e suportado oficialmente em Python `3.10`, `3.11`, `3.12` e `3.13`. |
 | **Git** | Versão recente | Para versionamento e envio de branches. |
-| **pip** | Atualizado | Gerenciador de pacotes padrão do Python (`python -m pip install --upgrade pip`). | > [!TIP]
-> Embora a suíte de testes unitários execute com mocks e emulações em qualquer máquina (sem depender de hardware específico), medições físicas em tempo real utilizam a biblioteca [CodeCarbon](https://github.com/mlco2/codecarbon). Para testes com medições físicas reais, recomenda-se processadores com suporte a Intel RAPL ou placas de vídeo NVIDIA com suporte a NVML.
+| **pip** | Atualizado | Gerenciador de pacotes padrão do Python (`python -m pip install --upgrade pip`). |
+
+> [!TIP]
+> Embora a suíte de testes unitários execute com mocks e emulações em qualquer máquina (sem depender de hardware específico), medições físicas em tempo real utilizam a biblioteca [CodeCarbon](https://github.com/mlco2/codecarbon). Em Linux com Intel RAPL ou em placas NVIDIA com NVML, o CodeCarbon lê a potência do hardware; no Windows, sem RAPL, a energia da CPU é estimada pela carga sobre o TDP (`cpu_load`), como nas medições do TCC (ver `docs/ambiente_medicao.md`).
 
 ---
 
@@ -267,7 +269,9 @@ Adotamos a convenção de [Conventional Commits](https://www.conventionalcommits
 | `refactor` | Refatoração de código sem alteração funcional | `refactor(tracker): modularizar extracao do emissions.csv` |
 | `perf` | Otimização de desempenho ou tempo de processamento | `perf(scoring): vetorizar calculo das pontuacoes parciais` |
 | `chore` | Alterações em ferramentas de build, dependências ou tarefas | `chore(deps): atualizar dependencia do scikit-learn` |
-| `ci` | Modificações em scripts e configurações do GitHub Actions | `ci: adicionar execucao de testes no python 3.13` | ### Boas Práticas para Commits:
+| `ci` | Modificações em scripts e configurações do GitHub Actions | `ci: adicionar execucao de testes no python 3.13` |
+
+### Boas Práticas para Commits:
 - Descreva a ação no tempo presente/imperativo (ex.: `adicionar`, `corrigir`, `atualizar`).
 - A primeira linha deve ter no máximo 72 caracteres e não deve terminar com ponto final.
 - Evite commits aglutinados com alterações não relacionadas; divida em commits atômicos e coesos.

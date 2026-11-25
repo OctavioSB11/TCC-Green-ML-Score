@@ -27,9 +27,9 @@ biblioteca).
 
 ### T1. Fundação
 - Estrutura: `app/Home.py` (entrada), `app/views/` (uma página por tela),
-  `app/data.py` (leitura e cache dos CSVs e do `contexts.csv`), `app/charts.py`
-  (gráficos Plotly reutilizáveis), `app/theme.py` (cores e rótulos, reaproveitando
-  `experiments/labels.py`).
+  `app/core/data.py` (leitura dos CSVs e do `contexts.csv`, sem Streamlit),
+  `app/core/state.py` (cache), `app/core/charts.py` (gráficos Plotly reutilizáveis),
+  `app/core/theme.py` (cores e rótulos, os mesmos de `experiments/labels.py`).
 - Dependências: novo extra `app = ["streamlit", "plotly"]` no `pyproject.toml`
   (sem pacotes de mapa extras: o mapa usa `plotly` `scatter_geo`).
 - Teste: `tests/test_app_data.py` verifica que a camada de dados encontra os 3

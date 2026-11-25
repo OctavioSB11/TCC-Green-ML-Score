@@ -112,7 +112,7 @@ def _to_number(column: pd.Series) -> pd.Series:
     comma = text.str.contains(",", regex=False)
     text = text.where(~comma, text.str.replace(".", "", regex=False))
     text = text.str.replace(",", ".", regex=False)
-    return pd.to_numeric(text.replace({"": np.nan, "nan": np.nan}), errors="coerce")
+    return pd.to_numeric(text.mask(text.isin(["", "nan"])), errors="coerce")
 
 
 def read_upload(raw: bytes, unit: str = "kWh") -> UploadedRuns:

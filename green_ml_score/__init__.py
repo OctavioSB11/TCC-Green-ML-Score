@@ -1,11 +1,13 @@
 """
 GreenML Score — métrica ambiental para avaliação de modelos de Machine Learning.
 
-A biblioteca é organizada nas quatro camadas descritas na Seção 3.4 do TCC:
+A biblioteca é organizada em módulos (Seção 3.4 do TCC):
     - collectors  : adaptadores de instrumentação (CodeCarbon)
     - estimators  : conversões energia→carbono e energia→água
-    - scoring     : cálculo do GMS, normalização e pesos contextuais
-    - integrations: conectores para MLflow e callbacks de frameworks
+    - contexts    : contextos de execução (região × horário) e avaliação modelo × contexto
+    - scoring     : cálculo do GMS, normalização, pesos e score relativo
+    - reporting   : cartão ambiental por modelo
+    - integrations: conectores para MLflow e scikit-learn
 
 O núcleo de scoring (puro, sem dependências de I/O) é reexportado aqui.
 As camadas collectors/integrations devem ser importadas a partir de seus

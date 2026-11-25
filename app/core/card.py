@@ -10,7 +10,7 @@ fatores do ``contexts.csv``. Exporta Markdown, CSV e PNG (matplotlib, sem intern
 from __future__ import annotations
 
 import io
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 import matplotlib
 
@@ -424,8 +424,3 @@ def to_png(card: CardData, dpi: int = 150) -> bytes:
     fig.savefig(buf, format="png", dpi=dpi, facecolor="white")
     plt.close(fig)
     return buf.getvalue()
-
-
-def as_dict(card: CardData) -> dict:
-    """Cartão como dicionário (útil para testes e integrações)."""
-    return asdict(card)

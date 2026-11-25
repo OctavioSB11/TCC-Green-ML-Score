@@ -35,6 +35,10 @@ desktop.ini
 Thumbs.db
 .DS_Store
 
+# Streamlit (segredos locais) e Node (script de capturas do painel)
+.streamlit/secrets.toml
+node_modules/
+
 # Editores
 .vscode/
 .idea/

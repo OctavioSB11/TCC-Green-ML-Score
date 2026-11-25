@@ -40,11 +40,6 @@ def decision(dataset: str, context_name: str = data.REFERENCE_CONTEXT) -> pd.Dat
     return data.decision_table(dataset, data.get_context(context_name))
 
 
-@st.cache_data(show_spinner=False)
-def profiles(dataset: str) -> pd.DataFrame:
-    return data.profile_summary(dataset)
-
-
 def selected_dataset() -> str:
     """Dataset escolhido na barra lateral (padrão: o primeiro disponível)."""
     options = datasets()
